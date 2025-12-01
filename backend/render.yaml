@@ -1,0 +1,142 @@
+# Render Blueprint for MicroCrop Backend (Node.js)
+# USSD Interface, Admin APIs, and Business Logic
+
+services:
+  # Main Backend API (USSD + Admin)
+  - type: web
+    name: microcrop-backend
+    runtime: node
+    plan: starter  # $7/month
+    region: oregon  # Closest to Africa with good latency
+    buildCommand: npm install && npm run prisma:generate
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: microcrop-db
+          property: connectionString
+      
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: microcrop-redis
+          property: connectionString
+      
+      # Data Processor API
+      - key: DATA_PROCESSOR_URL
+        value: https://microcrop-data-processor.onrender.com
+      - key: INTERNAL_API_TOKEN
+        sync: false  # Set manually in Render dashboard
+      
+      # Africa's Talking (USSD/SMS)
+      - key: AFRICASTALKING_USERNAME
+        sync: false
+      - key: AFRICASTALKING_API_KEY
+        sync: false
+      - key: AFRICASTALKING_SHORTCODE
+        sync: false
+      
+      # Swypt (M-Pesa Payment)
+      - key: SWYPT_API_KEY
+        sync: false
+      - key: SWYPT_SECRET_KEY
+        sync: false
+      - key: SWYPT_MERCHANT_ID
+        sync: false
+      
+      # Blockchain (Base Sepolia for testing, Base Mainnet for production)
+      - key: CONTRACT_ADDRESS
+        value: "0x..."  # Update with deployed contract
+      - key: PRIVATE_KEY
+        sync: false
+      - key: RPC_URL
+        value: https://base-sepolia.g.alchemy.com/v2/YOUR_KEY
+      
+      # JWT
+      - key: JWT_SECRET
+        generateValue: true
+      
+      # IPFS/Pinata
+      - key: PINATA_API_KEY
+        sync: false
+      - key: PINATA_SECRET_KEY
+        sync: false
+      
+      # WeatherXM Webhook
+      - key: WEATHERXM_WEBHOOK_API_KEY
+        generateValue: true
+    
+    healthCheckPath: /health
+    
+    autoDeploy: true
+    
+    domains:
+      - microcrop-backend.onrender.com
+
+  # Background Workers (Damage Assessment & Payout Processing)
+  - type: worker
+    name: microcrop-workers
+    runtime: node
+    plan: starter  # $7/month
+    buildCommand: npm install && npm run prisma:generate
+    startCommand: npm run workers
+    envVars:
+      # Same environment variables as web service
+      - key: NODE_ENV
+        value: production
+      
+      - key: DATABASE_URL
+        fromDatabase:
+          name: microcrop-db
+          property: connectionString
+      
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: microcrop-redis
+          property: connectionString
+      
+      - key: DATA_PROCESSOR_URL
+        value: https://microcrop-data-processor.onrender.com
+      - key: INTERNAL_API_TOKEN
+        sync: false
+      
+      - key: CONTRACT_ADDRESS
+        value: "0x..."
+      - key: PRIVATE_KEY
+        sync: false
+      - key: RPC_URL
+        value: https://base-sepolia.g.alchemy.com/v2/YOUR_KEY
+      
+      - key: SWYPT_API_KEY
+        sync: false
+      - key: SWYPT_SECRET_KEY
+        sync: false
+      - key: SWYPT_MERCHANT_ID
+        sync: false
+      
+      - key: PINATA_API_KEY
+        sync: false
+      - key: PINATA_SECRET_KEY
+        sync: false
+
+databases:
+  # PostgreSQL (shared with data-processor)
+  - name: microcrop-db
+    databaseName: microcrop_production
+    plan: starter  # $7/month - 256MB RAM, 1GB storage
+    region: oregon
+    
+    # Enable TimescaleDB extension for time-series data
+    postgresMajorVersion: 15
+
+# Redis (shared with data-processor and used for Bull queue)
+# Created via Render dashboard or CLI
+# Estimated cost: $10/month for 256MB
