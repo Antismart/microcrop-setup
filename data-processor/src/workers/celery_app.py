@@ -64,15 +64,15 @@ celery_app.conf.update(
     task_queues=(
         Queue("default", Exchange("default"), routing_key="default"),
         Queue("weather", Exchange("weather"), routing_key="weather.#"),
-        Queue("satellite", Exchange("satellite"), routing_key="satellite.#"),
+        Queue("planet", Exchange("planet"), routing_key="planet.#"),
         Queue("damage", Exchange("damage"), routing_key="damage.#"),
         Queue("priority", Exchange("priority"), routing_key="priority.#"),
     ),
-    
+
     # Task routes
     task_routes={
         "src.workers.weather_tasks.*": {"queue": "weather"},
-        "src.workers.satellite_tasks.*": {"queue": "satellite"},
+        "src.workers.planet_tasks.*": {"queue": "planet"},
         "src.workers.damage_tasks.*": {"queue": "damage"},
     },
     
@@ -98,28 +98,7 @@ celery_app.conf.update(
             "schedule": crontab(minute="*/10"),
             "options": {"queue": "weather"},
         },
-        
-        # Process pending satellite images every 15 minutes
-        "process-pending-satellite-images": {
-            "task": "src.workers.satellite_tasks.process_pending_images",
-            "schedule": crontab(minute="*/15"),
-            "options": {"queue": "satellite"},
-        },
-        
-        # Calculate daily NDVI at midnight
-        "calculate-daily-ndvi": {
-            "task": "src.workers.satellite_tasks.calculate_daily_ndvi",
-            "schedule": crontab(hour=0, minute=15),
-            "options": {"queue": "satellite"},
-        },
-        
-        # Update NDVI baselines weekly (Sundays at 2 AM)
-        "update-ndvi-baselines": {
-            "task": "src.workers.satellite_tasks.update_ndvi_baselines",
-            "schedule": crontab(hour=2, minute=0, day_of_week=0),
-            "options": {"queue": "satellite"},
-        },
-        
+
         # Process pending damage assessments every 10 minutes
         "process-pending-assessments": {
             "task": "src.workers.damage_tasks.process_pending_assessments",
@@ -166,15 +145,12 @@ celery_app.conf.task_annotations = {
     "src.workers.weather_tasks.fetch_weather_updates": {
         "rate_limit": "60/m",  # WeatherXM API limit
     },
-    "src.workers.satellite_tasks.order_satellite_image": {
-        "rate_limit": "10/m",  # Spexi API limit
-    },
 }
 
 # Auto-discover tasks
 celery_app.autodiscover_tasks([
     "src.workers.weather_tasks",
-    "src.workers.satellite_tasks",
+    "src.workers.planet_tasks",
     "src.workers.damage_tasks",
     "src.workers.health_tasks",
 ])

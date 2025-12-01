@@ -21,10 +21,6 @@ from src.workers.weather_tasks import (
     fetch_weather_updates,
     process_weather_indices,
 )
-from src.workers.satellite_tasks import (
-    order_satellite_image,
-    process_satellite_image,
-)
 from src.workers.damage_tasks import calculate_damage_assessment
 from src.storage.timescale_client import TimescaleClient
 from src.storage.redis_cache import RedisCache
@@ -306,49 +302,8 @@ async def get_weather_indices(
 # ============================================================================
 # Satellite Endpoints
 # ============================================================================
-
-@router.post("/satellite/order", response_model=TaskResponse, tags=["Satellite"])
-async def order_satellite(request: SatelliteOrderRequest) -> TaskResponse:
-    """
-    Order satellite image for a plot.
-    
-    Triggers asynchronous satellite image ordering from Spexi API.
-    """
-    try:
-        # Check rate limit
-        rate_limit_key = f"api_rate_limit:satellite:{request.plot_id}"
-        if not await redis_cache.check_rate_limit(rate_limit_key, limit=5, window=3600):
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Rate limit exceeded. Maximum 5 orders per hour per plot.",
-            )
-        
-        # Trigger task
-        task = order_satellite_image.delay(
-            plot_id=request.plot_id,
-            policy_id=request.policy_id,
-            latitude=request.latitude,
-            longitude=request.longitude,
-            area_hectares=request.area_hectares,
-            priority=request.priority,
-        )
-        
-        logger.info(f"Satellite order task submitted: {task.id} for plot {request.plot_id}")
-        
-        return TaskResponse(
-            task_id=task.id,
-            status="pending",
-            message=f"Satellite image order submitted for plot {request.plot_id}",
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to submit satellite order task: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to submit satellite order task: {str(e)}",
-        )
+# NOTE: Satellite ordering deprecated - moved to Planet Labs API integration
+# See src/api/routes/planet.py for new Planet Labs endpoints
 
 
 @router.get("/satellite/images/{plot_id}", response_model=List[SatelliteImageResponse], tags=["Satellite"])

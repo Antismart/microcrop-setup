@@ -3,9 +3,9 @@ External API integrations for MicroCrop.
 """
 
 from .weatherxm_client import WeatherXMClient
-from .spexi_client import SpexiClient
+from .planet_client import PlanetClient
 
 __all__ = [
     "WeatherXMClient",
-    "SpexiClient",
+    "PlanetClient",
 ]
