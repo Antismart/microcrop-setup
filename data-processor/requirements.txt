@@ -4,6 +4,7 @@
 # ============ Core Dependencies ============
 python-dotenv==1.0.0
 pydantic[email]==2.10.5
+pydantic-settings==2.6.1
 python-json-logger==2.0.7
 typing-extensions==4.12.2
 
