@@ -152,7 +152,7 @@ class TimescaleClient:
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS satellite_images (
                     time TIMESTAMPTZ NOT NULL,
-                    image_id TEXT NOT NULL PRIMARY KEY,
+                    image_id TEXT NOT NULL,
                     plot_id TEXT NOT NULL,
                     policy_id TEXT NOT NULL,
                     capture_date TIMESTAMPTZ NOT NULL,
@@ -171,7 +171,8 @@ class TimescaleClient:
                     processed_image_url TEXT,
                     ndvi_raster_url TEXT,
                     processor_version TEXT NOT NULL,
-                    data JSONB NOT NULL
+                    data JSONB NOT NULL,
+                    PRIMARY KEY (image_id, time)
                 );
             """)
             
@@ -191,7 +192,7 @@ class TimescaleClient:
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS damage_assessments (
                     time TIMESTAMPTZ NOT NULL,
-                    assessment_id TEXT NOT NULL PRIMARY KEY,
+                    assessment_id TEXT NOT NULL,
                     plot_id TEXT NOT NULL,
                     policy_id TEXT NOT NULL,
                     farmer_address TEXT NOT NULL,
@@ -210,7 +211,8 @@ class TimescaleClient:
                     oracle_submission_required BOOLEAN NOT NULL,
                     ipfs_cid TEXT,
                     processor_version TEXT NOT NULL,
-                    data JSONB NOT NULL
+                    data JSONB NOT NULL,
+                    PRIMARY KEY (assessment_id, time)
                 );
             """)
             
