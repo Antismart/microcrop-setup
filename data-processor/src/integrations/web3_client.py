@@ -32,7 +32,7 @@ from eth_account import Account
 from eth_utils import to_checksum_address
 from hexbytes import HexBytes
 
-from config.settings import get_settings
+from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 

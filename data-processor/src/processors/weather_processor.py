@@ -15,8 +15,8 @@ from typing import List, Dict, Optional, Tuple
 import numpy as np
 from scipy import stats
 
-from config import get_settings
-from models.weather import (
+from src.config import get_settings
+from src.models.weather import (
     WeatherData,
     WeatherIndices,
     DroughtIndex,

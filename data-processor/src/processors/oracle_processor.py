@@ -15,10 +15,10 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from integrations.web3_client import get_web3_client, Web3Client
-from storage.timescale_client import get_timescale_client
-from storage.redis_cache import get_redis_cache
-from config.settings import get_settings
+from src.integrations.web3_client import get_web3_client, Web3Client
+from src.storage.timescale_client import get_timescale_client
+from src.storage.redis_cache import get_redis_cache
+from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 

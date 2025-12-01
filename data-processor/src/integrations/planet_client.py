@@ -20,7 +20,7 @@ from typing import Optional, Dict, List
 import httpx
 from pydantic import BaseModel, Field
 
-from config import get_settings
+from src.config import get_settings
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

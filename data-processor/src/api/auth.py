@@ -17,7 +17,7 @@ from fastapi import HTTPException, Security, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 
-from config import get_settings
+from src.config import get_settings
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

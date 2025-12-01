@@ -14,7 +14,7 @@ from typing import Optional, Dict, Any
 import json
 import httpx
 
-from config import get_settings
+from src.config import get_settings
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

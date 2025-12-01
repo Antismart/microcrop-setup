@@ -21,8 +21,8 @@ from tenacity import (
     retry_if_exception_type,
 )
 
-from config import get_settings
-from models.weather import WeatherData
+from src.config import get_settings
+from src.models.weather import WeatherData
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

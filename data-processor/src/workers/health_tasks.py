@@ -14,12 +14,12 @@ import asyncio
 from celery import Task
 
 from .celery_app import celery_app
-from config import get_settings
-from storage.timescale_client import TimescaleClient
-from storage.redis_cache import RedisCache
-from storage.minio_client import MinIOClient
-from integrations.weatherxm_client import WeatherXMClient
-from integrations.spexi_client import SpexiClient
+from src.config import get_settings
+from src.storage.timescale_client import TimescaleClient
+from src.storage.redis_cache import RedisCache
+from src.storage.minio_client import MinIOClient
+from src.integrations.weatherxm_client import WeatherXMClient
+from src.integrations.spexi_client import SpexiClient
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

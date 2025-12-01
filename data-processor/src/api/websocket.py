@@ -16,8 +16,8 @@ from datetime import datetime
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.routing import APIRouter
 
-from config import get_settings
-from storage.redis_cache import RedisCache
+from src.config import get_settings
+from src.storage.redis_cache import RedisCache
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

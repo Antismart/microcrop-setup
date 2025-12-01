@@ -20,13 +20,13 @@ import numpy as np
 import rasterio
 
 from .celery_app import celery_app
-from config import get_settings
-from processors.satellite_processor import SatelliteProcessor
-from storage.timescale_client import TimescaleClient
-from storage.redis_cache import RedisCache
-from storage.minio_client import MinIOClient
-from integrations.spexi_client import SpexiClient
-from models.satellite import SatelliteImage
+from src.config import get_settings
+from src.processors.satellite_processor import SatelliteProcessor
+from src.storage.timescale_client import TimescaleClient
+from src.storage.redis_cache import RedisCache
+from src.storage.minio_client import MinIOClient
+from src.integrations.spexi_client import SpexiClient
+from src.models.satellite import SatelliteImage
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

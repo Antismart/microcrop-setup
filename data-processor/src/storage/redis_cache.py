@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 else:
     RedisLock = Any  # For runtime, use Any to avoid import issues
 
-from config import get_settings
+from src.config import get_settings
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

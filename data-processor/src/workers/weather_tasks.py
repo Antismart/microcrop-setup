@@ -17,12 +17,12 @@ import asyncio
 from celery import Task
 
 from .celery_app import celery_app
-from config import get_settings
-from processors.weather_processor import WeatherProcessor
-from storage.timescale_client import TimescaleClient
-from storage.redis_cache import RedisCache
-from integrations.weatherxm_client import WeatherXMClient
-from models.weather import WeatherData, WeatherIndices
+from src.config import get_settings
+from src.processors.weather_processor import WeatherProcessor
+from src.storage.timescale_client import TimescaleClient
+from src.storage.redis_cache import RedisCache
+from src.integrations.weatherxm_client import WeatherXMClient
+from src.models.weather import WeatherData, WeatherIndices
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

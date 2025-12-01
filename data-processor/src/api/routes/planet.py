@@ -14,8 +14,8 @@ from typing import Optional, Dict, List
 from datetime import datetime
 import logging
 
-from integrations.planet_client import get_planet_client, BiomassTimeseries
-from storage.timescale_client import get_db_client
+from src.integrations.planet_client import get_planet_client, BiomassTimeseries
+from src.storage.timescale_client import get_db_client
 from api.auth import get_current_user, require_internal_api
 
 logger = logging.getLogger(__name__)

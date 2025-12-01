@@ -14,9 +14,9 @@ from typing import List, Dict
 import asyncio
 
 from celery import shared_task
-from config import get_settings
-from integrations.planet_client import get_planet_client
-from storage.timescale_client import get_db_client
+from src.config import get_settings
+from src.integrations.planet_client import get_planet_client
+from src.storage.timescale_client import get_db_client
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

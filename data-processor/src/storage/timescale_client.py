@@ -16,10 +16,10 @@ import asyncpg
 from asyncpg import Pool
 import json
 
-from config import get_settings
-from models.weather import WeatherData, WeatherIndices
-from models.satellite import SatelliteImage
-from models.damage import DamageAssessment
+from src.config import get_settings
+from src.models.weather import WeatherData, WeatherIndices
+from src.models.satellite import SatelliteImage
+from src.models.damage import DamageAssessment
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
