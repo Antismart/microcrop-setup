@@ -76,6 +76,15 @@ class TimescaleClient:
     async def _create_tables(self) -> None:
         """Create database tables and hypertables."""
         async with self.pool.acquire() as conn:
+            # Drop existing tables if they exist (for schema updates)
+            # This ensures tables are created with correct composite primary keys
+            await conn.execute("""
+                DROP TABLE IF EXISTS damage_assessments CASCADE;
+                DROP TABLE IF EXISTS satellite_images CASCADE;
+                DROP TABLE IF EXISTS weather_indices CASCADE;
+                DROP TABLE IF EXISTS weather_data CASCADE;
+            """)
+
             # Weather data table
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS weather_data (
