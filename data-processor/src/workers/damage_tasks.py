@@ -10,7 +10,7 @@ Tasks:
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Optional, List
+from typing import Any, Dict, Optional, List
 import asyncio
 
 from celery import Task
@@ -81,7 +81,7 @@ def calculate_damage_assessment(
     assessment_period_days: int = 7,
     sum_insured_usdc: Optional[float] = None,
     max_payout_usdc: Optional[float] = None,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Calculate damage assessment for plot.
     
@@ -125,7 +125,7 @@ async def _calculate_damage_assessment(
     assessment_period_days: int,
     sum_insured_usdc: Optional[float],
     max_payout_usdc: Optional[float],
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Internal async implementation."""
     # Generate assessment ID
     assessment_id = f"DA_{plot_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"

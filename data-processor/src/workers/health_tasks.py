@@ -8,7 +8,7 @@ Tasks:
 
 import logging
 from datetime import datetime
-from typing import Dict
+from typing import Any, Dict
 import asyncio
 
 from celery import Task
@@ -56,7 +56,7 @@ class HealthTask(Task):
     base=HealthTask,
     bind=True,
 )
-def health_check(self) -> Dict[str, any]:
+def health_check(self) -> Dict[str, Any]:
     """
     Perform health check on all services.
     
@@ -83,7 +83,7 @@ def health_check(self) -> Dict[str, any]:
         }
 
 
-async def _health_check() -> Dict[str, any]:
+async def _health_check() -> Dict[str, Any]:
     """Internal async implementation."""
     results = {
         "healthy": True,
@@ -142,7 +142,7 @@ async def _health_check() -> Dict[str, any]:
     base=HealthTask,
     bind=True,
 )
-def collect_metrics(self) -> Dict[str, any]:
+def collect_metrics(self) -> Dict[str, Any]:
     """
     Collect system metrics for monitoring.
     
@@ -160,7 +160,7 @@ def collect_metrics(self) -> Dict[str, any]:
         }
 
 
-async def _collect_metrics() -> Dict[str, any]:
+async def _collect_metrics() -> Dict[str, Any]:
     """Internal async implementation."""
     metrics = {
         "timestamp": datetime.now().isoformat(),

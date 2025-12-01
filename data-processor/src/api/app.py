@@ -263,7 +263,7 @@ async def detailed_health_check() -> Dict[str, Any]:
 
 # Metrics endpoint
 @app.get("/metrics", tags=["Monitoring"])
-async def get_metrics() -> Dict[str, any]:
+async def get_metrics() -> Dict[str, Any]:
     """
     Get system metrics.
     

@@ -11,7 +11,7 @@ Tasks:
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+from typing import Any, List, Dict, Optional
 import asyncio
 
 from celery import Task
@@ -176,7 +176,7 @@ def fetch_weather_updates(
     policy_id: str,
     latitude: float,
     longitude: float,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Fetch weather updates for specific plot.
     
@@ -206,7 +206,7 @@ async def _fetch_weather_updates(
     policy_id: str,
     latitude: float,
     longitude: float,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Internal async implementation."""
     # Fetch current weather
     weather_data = await weatherxm_client.get_current_weather(latitude, longitude)
@@ -250,7 +250,7 @@ def process_weather_indices(
     policy_id: str,
     start_date: str,
     end_date: Optional[str] = None,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Calculate weather indices for plot.
     
@@ -283,7 +283,7 @@ async def _process_weather_indices(
     policy_id: str,
     start_date: str,
     end_date: Optional[str] = None,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Internal async implementation."""
     # Parse dates
     start = datetime.fromisoformat(start_date)
