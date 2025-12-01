@@ -1,0 +1,12 @@
+{
+  "cronSchedule": "0 0 * * *",
+  "chainSelectorName": "base-testnet-sepolia",
+  "policyManagerAddress": "0xYourPolicyManagerAddressOnBaseSepolia",
+  "payoutReceiverAddress": "0xYourPayoutReceiverAddressOnBaseSepolia",
+  "gasLimit": "500000",
+  "weatherxmApiUrl": "https://api.weatherxm.com/api/v1",
+  "planetApiUrl": "https://api.planet.com/data/v1",
+  "backendApiUrl": "https://staging-api.microcrop.example.com",
+  "minDamageThreshold": 1000,
+  "lookbackDays": 30
+}

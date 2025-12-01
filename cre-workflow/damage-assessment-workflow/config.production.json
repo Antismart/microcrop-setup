@@ -1,0 +1,12 @@
+{
+  "cronSchedule": "0 0 * * *",
+  "chainSelectorName": "base-mainnet",
+  "policyManagerAddress": "0xYourPolicyManagerAddressOnBaseMainnet",
+  "payoutReceiverAddress": "0xYourPayoutReceiverAddressOnBaseMainnet",
+  "gasLimit": "500000",
+  "weatherxmApiUrl": "https://api.weatherxm.com/api/v1",
+  "planetApiUrl": "https://api.planet.com/data/v1",
+  "backendApiUrl": "https://api.microcrop.example.com",
+  "minDamageThreshold": 1000,
+  "lookbackDays": 30
+}
