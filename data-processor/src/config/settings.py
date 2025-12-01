@@ -138,8 +138,8 @@ class Settings(BaseSettings):
     # ============ IPFS Storage ============
     IPFS_API_URL: str = Field("https://ipfs.infura.io:5001", env="IPFS_API_URL")
     IPFS_GATEWAY_URL: str = Field("https://ipfs.io/ipfs/", env="IPFS_GATEWAY_URL")
-    PINATA_API_KEY: str = Field(..., env="API_KEY")  # Using API_KEY from .env
-    PINATA_SECRET_KEY: str = Field(..., env="API_SECRET")  # Using API_SECRET from .env
+    PINATA_API_KEY: Optional[str] = Field(None, env="API_KEY")  # Using API_KEY from .env (optional)
+    PINATA_SECRET_KEY: Optional[str] = Field(None, env="API_SECRET")  # Using API_SECRET from .env (optional)
     PINATA_JWT: Optional[str] = Field(None, env="PINATA_JWT")
     PINATA_GATEWAY: str = Field("gateway.pinata.cloud", env="PINATA_GATEWAY")  # Custom gateway
     
