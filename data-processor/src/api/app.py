@@ -11,7 +11,7 @@ Provides:
 
 import logging
 from contextlib import asynccontextmanager
-from typing import Dict
+from typing import Any, Dict
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -203,7 +203,7 @@ async def log_requests(request: Request, call_next):
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])
-async def health_check() -> Dict[str, any]:
+async def health_check() -> Dict[str, Any]:
     """
     Basic health check endpoint.
     
@@ -218,7 +218,7 @@ async def health_check() -> Dict[str, any]:
 
 # Detailed health check endpoint
 @app.get("/health/detailed", tags=["Health"])
-async def detailed_health_check() -> Dict[str, any]:
+async def detailed_health_check() -> Dict[str, Any]:
     """
     Detailed health check with service status.
     
