@@ -1,0 +1,36 @@
+# Development Dockerfile for MicroCrop Backend
+# Includes hot-reload and debugging tools
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install development dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git \
+    curl
+
+# Install nodemon globally for hot-reload
+RUN npm install -g nodemon
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev)
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose ports
+EXPOSE 3000 9090 9229
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/health/live || exit 1
+
+# Run with nodemon for hot-reload
+CMD ["nodemon", "--inspect=0.0.0.0:9229", "src/server.js"]

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: microcrop
+  labels:
+    name: microcrop
+    environment: production
+    managed-by: kubernetes
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: microcrop-staging
+  labels:
+    name: microcrop-staging
+    environment: staging
+    managed-by: kubernetes
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: microcrop-monitoring
+  labels:
+    name: microcrop-monitoring
+    environment: production
+    managed-by: kubernetes

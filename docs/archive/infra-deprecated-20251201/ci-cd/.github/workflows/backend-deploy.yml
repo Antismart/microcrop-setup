@@ -1,0 +1,363 @@
+name: Backend Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-deploy.yml'
+  pull_request:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'backend/**'
+
+env:
+  ECR_REPOSITORY: microcrop-backend
+  EKS_CLUSTER_NAME: microcrop-production
+  AWS_REGION: us-east-1
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: test
+          RABBITMQ_DEFAULT_PASS: testpass
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5672:5672
+          - 15672:15672
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Run linting
+        working-directory: ./backend
+        run: npm run lint
+      
+      - name: Generate Prisma Client
+        working-directory: ./backend
+        run: npx prisma generate
+      
+      - name: Run database migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
+        run: npx prisma migrate deploy
+      
+      - name: Run unit tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
+          REDIS_URL: redis://localhost:6379
+          RABBITMQ_URL: amqp://test:testpass@localhost:5672
+          NODE_ENV: test
+        run: npm test -- --coverage
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: true
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run npm audit
+        working-directory: ./backend
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './backend'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run Snyk Security Scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+          command: test
+          file: ./backend/package.json
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    if: github.event_name == 'push'
+    outputs:
+      image-tag: ${{ steps.image.outputs.tag }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Generate image tag
+        id: image
+        run: |
+          COMMIT_SHA=${GITHUB_SHA::7}
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          BRANCH=${GITHUB_REF_NAME}
+          TAG="${BRANCH}-${TIMESTAMP}-${COMMIT_SHA}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "short_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./infra/docker/backend/Dockerfile.prod
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.image.outputs.tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.ref_name }}-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            VCS_REF=${{ steps.image.outputs.short_sha }}
+            VERSION=${{ steps.image.outputs.tag }}
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/staging'
+    environment:
+      name: staging
+      url: https://api-staging.microcrop.io
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name microcrop-staging --region ${{ env.AWS_REGION }}
+      
+      - name: Deploy to Kubernetes
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+        run: |
+          kubectl set image deployment/microcrop-backend \
+            backend=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
+            -n microcrop-staging
+          
+          kubectl rollout status deployment/microcrop-backend \
+            -n microcrop-staging \
+            --timeout=5m
+      
+      - name: Run smoke tests
+        run: |
+          chmod +x ./infra/ci-cd/scripts/smoke-tests.sh
+          ./infra/ci-cd/scripts/smoke-tests.sh staging
+      
+      - name: Notify on Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Staging deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://api.microcrop.io
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+      
+      - name: Deploy with Blue-Green strategy
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+        run: |
+          # Get current deployment color
+          CURRENT_COLOR=$(kubectl get service backend-service -n microcrop -o jsonpath='{.spec.selector.version}')
+          NEW_COLOR=$([[ "$CURRENT_COLOR" == "blue" ]] && echo "green" || echo "blue")
+          
+          echo "Current color: $CURRENT_COLOR"
+          echo "New color: $NEW_COLOR"
+          
+          # Create new deployment
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: microcrop-backend-$NEW_COLOR
+            namespace: microcrop
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: backend
+                version: $NEW_COLOR
+            template:
+              metadata:
+                labels:
+                  app: backend
+                  version: $NEW_COLOR
+              spec:
+                containers:
+                - name: backend
+                  image: $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+          EOF
+          
+          # Wait for new deployment
+          kubectl rollout status deployment/microcrop-backend-$NEW_COLOR -n microcrop --timeout=10m
+          
+          # Run health checks
+          chmod +x ./infra/ci-cd/scripts/health-check.sh
+          ./infra/ci-cd/scripts/health-check.sh $NEW_COLOR
+          
+          # Switch traffic
+          kubectl patch service backend-service -n microcrop -p "{\"spec\":{\"selector\":{\"version\":\"$NEW_COLOR\"}}}"
+          
+          echo "Traffic switched to $NEW_COLOR"
+          
+          # Wait and monitor
+          sleep 60
+          
+          # Verify and cleanup
+          ./infra/ci-cd/scripts/health-check.sh $NEW_COLOR
+          
+          if [ $? -eq 0 ]; then
+            echo "Deployment successful, cleaning up old deployment"
+            kubectl delete deployment microcrop-backend-$CURRENT_COLOR -n microcrop || true
+          else
+            echo "Health check failed, rolling back"
+            kubectl patch service backend-service -n microcrop -p "{\"spec\":{\"selector\":{\"version\":\"$CURRENT_COLOR\"}}}"
+            kubectl delete deployment microcrop-backend-$NEW_COLOR -n microcrop
+            exit 1
+          fi
+      
+      - name: Notify on Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Production deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      
+      - name: Create GitHub Release
+        if: success()
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.build-and-push.outputs.image-tag }}
+          release_name: Release ${{ needs.build-and-push.outputs.image-tag }}
+          body: |
+            Automated release for backend deployment
+            Image: ${{ needs.build-and-push.outputs.image-tag }}
+          draft: false
+          prerelease: false

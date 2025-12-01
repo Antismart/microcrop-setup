@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: microcrop
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  PORT: "3000"
+  METRICS_PORT: "9090"
+  
+  # Database configuration
+  DB_POOL_MIN: "2"
+  DB_POOL_MAX: "10"
+  DB_CONNECTION_TIMEOUT: "10000"
+  
+  # Redis configuration
+  REDIS_POOL_MIN: "2"
+  REDIS_POOL_MAX: "10"
+  REDIS_RETRY_STRATEGY: "exponential"
+  
+  # RabbitMQ configuration
+  RABBITMQ_PREFETCH: "10"
+  RABBITMQ_RECONNECT_DELAY: "5000"
+  
+  # API rate limiting
+  RATE_LIMIT_WINDOW: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  
+  # Worker configuration
+  WORKER_CONCURRENCY: "5"
+  WORKER_MAX_RETRIES: "3"
+  WORKER_RETRY_DELAY: "5000"
+  
+  # H3 geospatial configuration
+  H3_RESOLUTION: "8"
+  
+  # WeatherXM configuration
+  WEATHERXM_API_URL: "https://pro.weatherxm.com/api/v1"
+  WEATHER_SYNC_INTERVAL: "3600000"
+  
+  # IPFS configuration
+  IPFS_TIMEOUT: "30000"
+  IPFS_RETRY_ATTEMPTS: "3"
+  
+  # Monitoring
+  ENABLE_METRICS: "true"
+  ENABLE_TRACING: "false"
+  
+  # Feature flags
+  ENABLE_USSD: "true"
+  ENABLE_WEBHOOKS: "true"
+  ENABLE_AUTO_PAYOUTS: "true"

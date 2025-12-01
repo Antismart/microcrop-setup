@@ -1,0 +1,91 @@
+# Multi-stage production Dockerfile for MicroCrop Backend
+# Optimized for security, performance, and small image size
+
+# Stage 1: Builder
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install dependencies (production only)
+RUN npm ci --only=production --ignore-scripts
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Copy source code
+COPY src ./src
+
+# Stage 2: Production
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    dumb-init \
+    ca-certificates \
+    && update-ca-certificates
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+# Copy from builder
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nodejs:nodejs /app/src ./src
+COPY --chown=nodejs:nodejs package*.json ./
+
+# Create logs directory
+RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app/logs
+
+# Health check script
+COPY --chown=nodejs:nodejs <<EOF /app/healthcheck.js
+const http = require('http');
+const options = {
+  host: 'localhost',
+  port: process.env.PORT || 3000,
+  path: '/health/live',
+  timeout: 2000
+};
+
+const healthCheck = http.request(options, (res) => {
+  if (res.statusCode == 200) {
+    process.exit(0);
+  } else {
+    process.exit(1);
+  }
+});
+
+healthCheck.on('error', () => {
+  process.exit(1);
+});
+
+healthCheck.end();
+EOF
+
+# Switch to non-root user
+USER nodejs
+
+# Expose ports
+EXPOSE 3000 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node healthcheck.js
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "src/server.js"]
+
+# Metadata
+LABEL maintainer="MicroCrop DevOps <devops@microcrop.io>"
+LABEL description="MicroCrop Backend API - Production"
+LABEL version="1.0.0"
