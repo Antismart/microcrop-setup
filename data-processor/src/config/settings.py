@@ -172,7 +172,7 @@ class Settings(BaseSettings):
     BIOMASS_DATA_RETENTION_DAYS: int = Field(1095, env="BIOMASS_DATA_RETENTION_DAYS")  # 3 years
     LOG_RETENTION_DAYS: int = Field(90, env="LOG_RETENTION_DAYS")
     
-    @field_validator("DAMAGE_WEATHER_WEIGHT", "DAMAGE_SATELLITE_WEIGHT")
+    @field_validator("DAMAGE_WEATHER_WEIGHT", "DAMAGE_BIOMASS_WEIGHT")
     @classmethod
     def validate_weights(cls, v):
         """Ensure weights are between 0 and 1"""
