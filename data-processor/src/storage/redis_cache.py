@@ -40,9 +40,9 @@ class RedisCache:
         self.max_connections = settings.REDIS_MAX_CONNECTIONS
         
         # TTL settings
-        self.default_ttl = settings.CACHE_TTL_DEFAULT
-        self.weather_ttl = settings.CACHE_TTL_WEATHER
-        self.satellite_ttl = settings.CACHE_TTL_SATELLITE
+        self.default_ttl = settings.CACHE_TTL
+        self.weather_ttl = settings.CACHE_WEATHER_TTL
+        self.satellite_ttl = settings.CACHE_SATELLITE_TTL
         
         self.client: Optional[Redis] = None
         
