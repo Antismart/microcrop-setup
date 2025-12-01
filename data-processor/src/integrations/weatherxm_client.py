@@ -39,7 +39,7 @@ class WeatherXMClient:
         # API configuration
         self.api_key = settings.WEATHERXM_API_KEY
         self.api_url = settings.WEATHERXM_API_URL
-        self.rate_limit = settings.WEATHERXM_RATE_LIMIT_PER_MINUTE
+        self.rate_limit = settings.WEATHERXM_RATE_LIMIT
         
         # HTTP client
         self.client: Optional[httpx.AsyncClient] = None
