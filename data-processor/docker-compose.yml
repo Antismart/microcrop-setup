@@ -1,0 +1,230 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with TimescaleDB
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    container_name: microcrop-postgres
+    environment:
+      POSTGRES_USER: microcrop
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: microcrop
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microcrop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U microcrop"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and Celery broker
+  redis:
+    image: redis:7-alpine
+    container_name: microcrop-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - microcrop-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # NOTE: Kafka and MinIO removed - no longer needed
+  # - Kafka: Replaced by simpler HTTP API + WebSocket architecture
+  # - MinIO: No longer storing satellite images locally
+  # Uncomment below if you need to restore for legacy compatibility
+  # ============================================================
+  
+  # # Apache Kafka (DEPRECATED)
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.5.0
+  #   ...
+  # 
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.5.0
+  #   ...
+  #
+  # # MinIO Object Storage (DEPRECATED)
+  # minio:
+  #   image: minio/minio:latest
+  #   ...
+
+  # Data Processor API (Backend for CRE Workflow)
+  processor-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: microcrop-processor-api
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+    environment:
+      # Database
+      - DATABASE_URL=postgresql://microcrop:password@postgres:5432/microcrop
+      - TIMESCALE_URL=postgresql://microcrop:password@postgres:5432/microcrop
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      # Celery
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      # WeatherXM API (set in .env)
+      - WEATHERXM_API_KEY=${WEATHERXM_API_KEY}
+      # Planet Labs API (set in .env)
+      - PLANET_API_KEY=${PLANET_API_KEY}
+      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+      - GCS_CREDENTIALS=${GCS_CREDENTIALS}
+      # Backend API Authentication
+      - BACKEND_API_TOKEN_SECRET=${BACKEND_API_TOKEN_SECRET}
+      # IPFS
+      - PINATA_API_KEY=${PINATA_API_KEY}
+      - PINATA_SECRET_KEY=${PINATA_SECRET_KEY}
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+      - ./.env:/app/.env  # Mount .env for secrets
+    networks:
+      - microcrop-network
+    command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Workers (Weather & Planet tasks)
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: microcrop-celery-worker
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      # Database
+      - DATABASE_URL=postgresql://microcrop:password@postgres:5432/microcrop
+      - TIMESCALE_URL=postgresql://microcrop:password@postgres:5432/microcrop
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      # Celery
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      # APIs
+      - WEATHERXM_API_KEY=${WEATHERXM_API_KEY}
+      - PLANET_API_KEY=${PLANET_API_KEY}
+      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+      - GCS_CREDENTIALS=${GCS_CREDENTIALS}
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+      - ./.env:/app/.env
+    networks:
+      - microcrop-network
+    command: celery -A src.workers.celery_app worker --loglevel=info --concurrency=2
+    restart: unless-stopped
+
+  # Celery Beat (Scheduler for periodic tasks)
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: microcrop-celery-beat
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      # Database
+      - DATABASE_URL=postgresql://microcrop:password@postgres:5432/microcrop
+      - REDIS_URL=redis://redis:6379/0
+      # Celery
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      # APIs
+      - WEATHERXM_API_KEY=${WEATHERXM_API_KEY}
+      - PLANET_API_KEY=${PLANET_API_KEY}
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+      - ./.env:/app/.env
+    networks:
+      - microcrop-network
+    command: celery -A src.workers.celery_app beat --loglevel=info
+    restart: unless-stopped
+
+  # Flower (Celery Monitoring)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: microcrop-flower
+    depends_on:
+      - redis
+      - celery-worker
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    networks:
+      - microcrop-network
+    command: celery -A src.workers.celery_app flower --port=5555
+    restart: unless-stopped
+
+  # Prometheus (Metrics)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: microcrop-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - microcrop-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+
+  # Grafana (Visualization)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: microcrop-grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
+    networks:
+      - microcrop-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  # NOTE: Removed zookeeper, kafka, minio volumes - no longer needed
+  prometheus_data:
+  grafana_data:
+
+networks:
+  microcrop-network:
+    driver: bridge
