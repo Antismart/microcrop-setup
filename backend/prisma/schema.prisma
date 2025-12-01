@@ -1,15 +1,260 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  // Using default output location: node_modules/.prisma/client
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Enums
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CropType {
+  MAIZE
+  BEANS
+  POTATOES
+  WHEAT
+  RICE
+  SORGHUM
+  MILLET
+  CASSAVA
+  SWEET_POTATO
+  VEGETABLES
+  OTHER
+}
+
+enum CoverageType {
+  DROUGHT
+  FLOOD
+  BOTH
+}
+
+enum PolicyStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  CLAIMED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum TransactionType {
+  PREMIUM_PAYMENT
+  PAYOUT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum UserRole {
+  FARMER
+  COOPERATIVE
+  ADMIN
+}
+
+// Models
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  phone         String    @unique
+  password      String    // Hashed with bcrypt
+  firstName     String
+  lastName      String
+  role          UserRole  @default(FARMER)
+  isActive      Boolean   @default(true)
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+
+  // Optional: Link to Farmer model for farmers who also use USSD
+  farmerId      String?   @unique
+  farmer        Farmer?   @relation(fields: [farmerId], references: [id])
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+}
+
+model Farmer {
+  id          String    @id @default(uuid())
+  phoneNumber String    @unique
+  nationalId  String?   @unique
+  firstName   String
+  lastName    String
+  county      String
+  subCounty   String
+  ward        String?
+  village     String?
+  kycStatus   KycStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  plots        Plot[]
+  policies     Policy[]
+  transactions Transaction[]
+  payouts      Payout[]
+  user         User?
+
+  @@index([phoneNumber])
+  @@index([nationalId])
+}
+
+model Plot {
+  id               String    @id @default(uuid())
+  farmerId         String
+  name             String
+  latitude         Float
+  longitude        Float
+  acreage          Float
+  cropType         CropType
+  plantingDate     DateTime?
+  weatherStationId String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  farmer         Farmer           @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  policies       Policy[]
+  weatherEvents  WeatherEvent[]
+  satelliteData  SatelliteData[]
+
+  @@index([farmerId])
+  @@index([weatherStationId])
+}
+
+model Policy {
+  id               String        @id @default(uuid())
+  policyNumber     String        @unique
+  farmerId         String
+  plotId           String
+  coverageType     CoverageType
+  sumInsured       Float
+  premium          Float
+  startDate        DateTime
+  endDate          DateTime
+  status           PolicyStatus  @default(PENDING_PAYMENT)
+  droughtThreshold Json?
+  floodThreshold   Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  farmer             Farmer              @relation(fields: [farmerId], references: [id])
+  plot               Plot                @relation(fields: [plotId], references: [id])
+  damageAssessments  DamageAssessment[]
+  payouts            Payout[]
+
+  @@index([farmerId])
+  @@index([plotId])
+  @@index([policyNumber])
+  @@index([status])
+}
+
+model WeatherEvent {
+  id          String   @id @default(uuid())
+  plotId      String
+  stationId   String
+  timestamp   DateTime @default(now())
+  rainfall    Float?
+  temperature Float?
+  humidity    Float?
+  windSpeed   Float?
+  createdAt   DateTime @default(now())
+
+  plot Plot @relation(fields: [plotId], references: [id], onDelete: Cascade)
+
+  @@index([plotId])
+  @@index([stationId])
+  @@index([timestamp])
+}
+
+model SatelliteData {
+  id          String   @id @default(uuid())
+  plotId      String
+  captureDate DateTime
+  ndvi        Float
+  evi         Float?
+  cloudCover  Float?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  plot Plot @relation(fields: [plotId], references: [id], onDelete: Cascade)
+
+  @@index([plotId])
+  @@index([captureDate])
+}
+
+model DamageAssessment {
+  id                 String   @id @default(uuid())
+  policyId           String
+  weatherStressIndex Float
+  vegetationIndex    Float
+  damageIndex        Float
+  triggerDate        DateTime
+  proofHash          String?
+  createdAt          DateTime @default(now())
+
+  policy Policy @relation(fields: [policyId], references: [id])
+
+  @@index([policyId])
+  @@index([triggerDate])
+}
+
+model Payout {
+  id              String        @id @default(uuid())
+  policyId        String
+  farmerId        String
+  amount          Float
+  status          PayoutStatus  @default(PENDING)
+  transactionHash String?
+  mpesaRef        String?
+  initiatedAt     DateTime      @default(now())
+  completedAt     DateTime?
+  failureReason   String?
+
+  policy Policy @relation(fields: [policyId], references: [id])
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+
+  @@index([policyId])
+  @@index([farmerId])
+  @@index([status])
+}
+
+model Transaction {
+  id            String            @id @default(uuid())
+  farmerId      String
+  type          TransactionType
+  amount        Float
+  status        TransactionStatus @default(PENDING)
+  reference     String            @unique
+  mpesaRef      String?
+  phoneNumber   String
+  description   String?
+  metadata      Json?
+  createdAt     DateTime          @default(now())
+  completedAt   DateTime?
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+
+  @@index([farmerId])
+  @@index([reference])
+  @@index([status])
 }
