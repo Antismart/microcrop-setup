@@ -35,10 +35,10 @@ class TimescaleClient:
         self.pool: Optional[Pool] = None
         
         # Connection parameters
-        self.database_url = settings.get_database_url()
+        self.database_url = settings.TIMESCALE_URL
         self.min_pool_size = 5
-        self.max_pool_size = settings.DATABASE_POOL_SIZE
-        self.command_timeout = settings.DATABASE_TIMEOUT
+        self.max_pool_size = settings.DB_POOL_SIZE
+        self.command_timeout = settings.DB_POOL_TIMEOUT
         
         self.logger.info("TimescaleClient initialized")
     
