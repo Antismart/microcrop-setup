@@ -23,7 +23,6 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from src.config import get_settings
 from src.storage.timescale_client import TimescaleClient
 from src.storage.redis_cache import RedisCache
-from src.storage.minio_client import MinIOClient
 from src.storage.ipfs_client import IPFSClient
 
 settings = get_settings()
@@ -33,7 +32,6 @@ logger = logging.getLogger(__name__)
 # Initialize storage clients (shared across requests)
 timescale_client = TimescaleClient()
 redis_cache = RedisCache()
-minio_client = MinIOClient()
 ipfs_client = IPFSClient()
 
 
@@ -50,19 +48,15 @@ async def lifespan(app: FastAPI):
         # Initialize database connections
         await timescale_client.connect()
         logger.info("TimescaleDB connected")
-        
+
         # Initialize Redis
         await redis_cache.connect()
         logger.info("Redis connected")
-        
-        # Initialize MinIO
-        minio_client.connect()
-        logger.info("MinIO connected")
-        
+
         # Initialize IPFS
         await ipfs_client.connect()
         logger.info("IPFS client connected")
-        
+
         logger.info("All services initialized successfully")
         
     except Exception as e:
@@ -263,21 +257,7 @@ async def detailed_health_check() -> Dict[str, any]:
             "error": str(e),
         }
         health_status["status"] = "degraded"
-    
-    # Check MinIO
-    try:
-        buckets = minio_client.list_buckets()
-        health_status["services"]["minio"] = {
-            "status": "healthy",
-            "bucket_count": len(buckets),
-        }
-    except Exception as e:
-        health_status["services"]["minio"] = {
-            "status": "unhealthy",
-            "error": str(e),
-        }
-        health_status["status"] = "degraded"
-    
+
     return health_status
 
 

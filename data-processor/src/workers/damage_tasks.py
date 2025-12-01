@@ -12,7 +12,6 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List
 import asyncio
-import json
 
 from celery import Task
 
@@ -21,7 +20,6 @@ from src.config import get_settings
 from src.processors.damage_calculator import DamageCalculator
 from src.storage.timescale_client import TimescaleClient
 from src.storage.redis_cache import RedisCache
-from src.storage.minio_client import MinIOClient
 from src.storage.ipfs_client import IPFSClient
 from src.models.damage import DamageAssessment, PayoutStatus
 
@@ -33,7 +31,6 @@ logger = logging.getLogger(__name__)
 damage_calculator = DamageCalculator()
 timescale_client = TimescaleClient()
 redis_cache = RedisCache()
-minio_client = MinIOClient()
 ipfs_client = IPFSClient()
 
 
@@ -52,7 +49,6 @@ class DamageTask(Task):
         """Initialize all client connections."""
         await timescale_client.connect()
         await redis_cache.connect()
-        minio_client.connect()
         await ipfs_client.connect()
         logger.info("Damage task connections initialized")
     
@@ -255,18 +251,7 @@ async def _calculate_damage_assessment(
                 "payout_amount": assessment.payout_trigger.net_payout_usdc,
             },
         )
-        
-        # Also upload to MinIO for backup
-        await minio_client.upload_damage_proof(
-            assessment_id=assessment_id,
-            proof_data=json.dumps(proof_data).encode(),
-            content_type="application/json",
-            metadata={
-                "plot_id": plot_id,
-                "ipfs_cid": ipfs_cid,
-            },
-        )
-        
+
         # Update assessment with IPFS CID
         update_query = """
             UPDATE damage_assessments
@@ -543,24 +528,6 @@ async def _archive_old_assessments() -> Dict[str, int]:
     
     for assessment in old_assessments:
         try:
-            # Create archive document
-            archive_data = {
-                "assessment_id": assessment["assessment_id"],
-                "data": assessment["data"],
-                "archived_at": datetime.now().isoformat(),
-            }
-            
-            # Upload to MinIO
-            await minio_client.upload_damage_proof(
-                assessment_id=f"archive_{assessment['assessment_id']}",
-                proof_data=json.dumps(archive_data).encode(),
-                content_type="application/json",
-                metadata={
-                    "type": "archive",
-                    "archived_at": datetime.now().isoformat(),
-                },
-            )
-            
             # Mark as archived
             update_query = """
                 UPDATE damage_assessments
@@ -572,9 +539,9 @@ async def _archive_old_assessments() -> Dict[str, int]:
                 datetime.now(),
                 assessment["assessment_id"],
             )
-            
+
             archived_count += 1
-            
+
         except Exception as e:
             logger.error(
                 f"Failed to archive assessment {assessment['assessment_id']}: {e}",

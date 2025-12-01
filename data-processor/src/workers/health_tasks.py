@@ -17,9 +17,7 @@ from .celery_app import celery_app
 from src.config import get_settings
 from src.storage.timescale_client import TimescaleClient
 from src.storage.redis_cache import RedisCache
-from src.storage.minio_client import MinIOClient
 from src.integrations.weatherxm_client import WeatherXMClient
-from src.integrations.spexi_client import SpexiClient
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -28,9 +26,7 @@ logger = logging.getLogger(__name__)
 # Initialize clients
 timescale_client = TimescaleClient()
 redis_cache = RedisCache()
-minio_client = MinIOClient()
 weatherxm_client = WeatherXMClient()
-spexi_client = SpexiClient()
 
 
 class HealthTask(Task):
@@ -49,9 +45,7 @@ class HealthTask(Task):
         try:
             await timescale_client.connect()
             await redis_cache.connect()
-            minio_client.connect()
             await weatherxm_client.connect()
-            await spexi_client.connect()
             logger.info("Health task connections initialized")
         except Exception as e:
             logger.error(f"Failed to initialize health task connections: {e}")
@@ -126,21 +120,7 @@ async def _health_check() -> Dict[str, any]:
             "error": str(e),
         }
         results["healthy"] = False
-    
-    # Check MinIO
-    try:
-        buckets = minio_client.list_buckets()
-        results["services"]["minio"] = {
-            "healthy": True,
-            "bucket_count": len(buckets),
-        }
-    except Exception as e:
-        results["services"]["minio"] = {
-            "healthy": False,
-            "error": str(e),
-        }
-        results["healthy"] = False
-    
+
     # Check WeatherXM (non-blocking)
     try:
         # Just check if client is configured
@@ -153,20 +133,7 @@ async def _health_check() -> Dict[str, any]:
             "healthy": False,
             "error": str(e),
         }
-    
-    # Check Spexi (non-blocking)
-    try:
-        # Just check if client is configured
-        results["services"]["spexi"] = {
-            "healthy": spexi_client._http_client is not None,
-            "note": "Limited check - not making API call",
-        }
-    except Exception as e:
-        results["services"]["spexi"] = {
-            "healthy": False,
-            "error": str(e),
-        }
-    
+
     return results
 
 
