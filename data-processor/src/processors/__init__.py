@@ -1,15 +1,11 @@
 """
 MicroCrop Data Processors
 
-Core processors for weather, satellite, and damage calculations.
+Core processors for weather data processing.
 """
 
 from .weather_processor import WeatherProcessor
-from .satellite_processor import SatelliteProcessor
-from .damage_calculator import DamageCalculator
 
 __all__ = [
     "WeatherProcessor",
-    "SatelliteProcessor",
-    "DamageCalculator",
 ]

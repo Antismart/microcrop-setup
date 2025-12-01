@@ -17,7 +17,6 @@ from celery import Task
 
 from .celery_app import celery_app
 from src.config import get_settings
-from src.processors.damage_calculator import DamageCalculator
 from src.storage.timescale_client import TimescaleClient
 from src.storage.redis_cache import RedisCache
 from src.storage.ipfs_client import IPFSClient
@@ -28,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 # Initialize clients
-damage_calculator = DamageCalculator()
+# NOTE: DamageCalculator deprecated - damage calculation moved to Chainlink CRE workflow
 timescale_client = TimescaleClient()
 redis_cache = RedisCache()
 ipfs_client = IPFSClient()
@@ -189,108 +188,41 @@ async def _calculate_damage_assessment(
     logger.info(
         f"Found {len(satellite_images)} satellite images for assessment"
     )
-    
-    # Calculate damage
-    assessment = await damage_calculator.calculate_damage(
-        assessment_id=assessment_id,
-        plot_id=plot_id,
-        policy_id=policy_id,
-        farmer_address=farmer_address,
-        assessment_start_date=start_date,
-        assessment_end_date=end_date,
-        weather_indices=weather_indices,
-        satellite_images=satellite_images,
-        sum_insured_usdc=sum_insured_usdc,
-        max_payout_usdc=max_payout_usdc,
-    )
-    
-    # Store assessment
-    await timescale_client.store_damage_assessment(assessment)
-    
-    # If payout triggered, upload proof to IPFS
-    ipfs_cid = None
-    if assessment.payout_trigger.is_triggered:
-        logger.info(f"Payout triggered for plot {plot_id}, uploading proof to IPFS")
-        
-        # Create proof document
-        proof_data = {
-            "assessment_id": assessment_id,
-            "plot_id": plot_id,
-            "policy_id": policy_id,
-            "farmer_address": farmer_address,
-            "assessment_period": {
-                "start": start_date.isoformat(),
-                "end": end_date.isoformat(),
-            },
-            "damage_scores": {
-                "weather_damage_score": assessment.damage_scores.weather_damage_score,
-                "satellite_damage_score": assessment.damage_scores.satellite_damage_score,
-                "composite_damage_score": assessment.damage_scores.composite_damage_score,
-            },
-            "payout": {
-                "triggered": assessment.payout_trigger.is_triggered,
-                "gross_payout_usdc": assessment.payout_trigger.gross_payout_usdc,
-                "net_payout_usdc": assessment.payout_trigger.net_payout_usdc,
-                "trigger_reasons": assessment.payout_trigger.trigger_reasons,
-            },
-            "evidence": {
-                "weather_indices": weather_indices,
-                "satellite_image_count": len(satellite_images),
-                "confidence_score": assessment.confidence_score,
-            },
-            "timestamp": datetime.now().isoformat(),
-        }
-        
-        # Upload to IPFS
-        ipfs_cid = await ipfs_client.upload_damage_proof(
-            assessment_id=assessment_id,
-            proof_data=proof_data,
-            metadata={
-                "plot_id": plot_id,
-                "policy_id": policy_id,
-                "payout_amount": assessment.payout_trigger.net_payout_usdc,
-            },
-        )
 
-        # Update assessment with IPFS CID
-        update_query = """
-            UPDATE damage_assessments
-            SET ipfs_cid = $1
-            WHERE assessment_id = $2
-        """
-        await timescale_client.execute_query(update_query, ipfs_cid, assessment_id)
-    
-    # Cache assessment
-    cache_key = f"damage_assessment:{assessment_id}"
-    await redis_cache.set(
-        cache_key,
-        assessment.model_dump_json(),
-        ttl=86400,  # 24 hours
-    )
-    
-    logger.info(
-        f"Damage assessment completed for plot {plot_id}: "
-        f"composite_score={assessment.damage_scores.composite_damage_score:.2f}, "
-        f"triggered={assessment.payout_trigger.is_triggered}, "
-        f"payout=${assessment.payout_trigger.net_payout_usdc:.2f}"
-    )
-    
-    result = {
+    # NOTE: Damage calculation has been moved to Chainlink CRE workflow
+    # This endpoint now returns data for CRE to process
+    logger.info("Damage calculation moved to Chainlink CRE workflow")
+
+    return {
+        "status": "data_prepared",
+        "message": "Damage calculation moved to Chainlink CRE workflow",
         "assessment_id": assessment_id,
         "plot_id": plot_id,
-        "composite_damage_score": assessment.damage_scores.composite_damage_score,
-        "damage_type": assessment.damage_type,
-        "payout_triggered": assessment.payout_trigger.is_triggered,
-        "payout_amount_usdc": assessment.payout_trigger.net_payout_usdc,
-        "ipfs_cid": ipfs_cid,
-        "requires_manual_review": assessment.requires_manual_review,
+        "policy_id": policy_id,
+        "farmer_address": farmer_address,
+        "assessment_period": {
+            "start": start_date.isoformat(),
+            "end": end_date.isoformat(),
+            "days": assessment_period_days,
+        },
+        "data": {
+            "weather_indices": weather_indices,
+            "satellite_image_count": len(satellite_images),
+            "sum_insured_usdc": sum_insured_usdc,
+            "max_payout_usdc": max_payout_usdc,
+        },
     }
-    
-    # If triggered and no manual review required, queue for blockchain submission
-    if assessment.payout_trigger.is_triggered and not assessment.requires_manual_review:
-        process_pending_payouts.apply_async(countdown=60)  # Process after 1 minute
-    
-    return result
+
+    # ============ OLD DAMAGE CALCULATION LOGIC - MOVED TO CRE ============
+    # The following code has been deprecated and moved to Chainlink CRE workflow
+    # Kept for reference only
+    #
+    # assessment = await damage_calculator.calculate_damage(...)
+    # await timescale_client.store_damage_assessment(assessment)
+    # ipfs_cid = await ipfs_client.upload_damage_proof(...)
+    # await redis_cache.set(cache_key, assessment.model_dump_json(), ttl=86400)
+    # process_pending_payouts.apply_async(countdown=60)
+    # ======================================================================
 
 
 @celery_app.task(
