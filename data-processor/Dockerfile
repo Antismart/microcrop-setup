@@ -1,25 +1,21 @@
 # MicroCrop Data Processor - Production Dockerfile
-# Python 3.10 with GDAL support
+# Python 3.11 FastAPI service for weather and biomass data processing
 
-FROM osgeo/gdal:ubuntu-full-3.8.3
+# Use official Python image
+FROM python:3.11-slim-bookworm
 
 # Set working directory
 WORKDIR /app
 
-# Install Python 3.10 and system dependencies
+# Install system dependencies (no GDAL needed - using Planet API)
 RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3.10-dev \
-    python3-pip \
     build-essential \
     libpq-dev \
-    libgeos-dev \
-    libproj-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip
-RUN python3.10 -m pip install --upgrade pip setuptools wheel
+RUN python3 -m pip install --upgrade pip setuptools wheel
 
 # Copy requirements first for better caching
 COPY requirements.txt .
