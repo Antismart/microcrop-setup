@@ -1,0 +1,37 @@
+{
+  "name": "microcrop-cre-workflow",
+  "version": "1.0.0",
+  "description": "MicroCrop automated damage assessment workflow using Chainlink Runtime Environment",
+  "main": "damage-assessment-workflow/main.ts",
+  "scripts": {
+    "simulate": "cre workflow simulate damage-assessment-workflow --target staging-settings",
+    "simulate:prod": "cre workflow simulate damage-assessment-workflow --target production-settings",
+    "deploy": "cre workflow deploy damage-assessment-workflow --target production-settings",
+    "activate": "cre workflow activate",
+    "pause": "cre workflow pause",
+    "test": "echo \"Run: bun run simulate\""
+  },
+  "keywords": [
+    "chainlink",
+    "cre",
+    "oracle",
+    "insurance",
+    "weather",
+    "satellite"
+  ],
+  "author": "MicroCrop",
+  "license": "MIT",
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.0.0",
+    "viem": "^2.21.49",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  }
+}

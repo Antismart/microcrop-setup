@@ -1,0 +1,57 @@
+# Environment variables with sensitive credentials
+.env
+.env.local
+.env.production
+
+# Node modules
+node_modules/
+bun.lockb
+package-lock.json
+yarn.lock
+
+# CRE build artifacts
+.cre/
+*.wasm
+*.wat
+
+# TypeScript build output
+dist/
+build/
+*.tsbuildinfo
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Secrets (never commit these!)
+secrets.yaml.local
+*.key
+*.pem
+private-keys/
+
+# Deployment artifacts (keep templates, ignore filled versions)
+deployment.env
+deployed-addresses.json
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
