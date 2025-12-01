@@ -1,0 +1,103 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "name": "microcrop-backend",
+  "services": {
+    "backend-api": {
+      "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "cd data-processor && pip install -r requirements.txt"
+      },
+      "deploy": {
+        "startCommand": "cd data-processor && uvicorn src.api.app:app --host 0.0.0.0 --port $PORT --workers 2",
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 10,
+        "healthcheckPath": "/health",
+        "healthcheckTimeout": 100
+      },
+      "env": {
+        "PYTHON_VERSION": "3.10",
+        "ENVIRONMENT": "production",
+        "LOG_LEVEL": "INFO",
+        "BACKEND_API_TOKEN_ALGORITHM": "HS256",
+        "BACKEND_API_TOKEN_EXPIRE_MINUTES": "60",
+        "WEATHERXM_API_KEY": "154184a5-6634-405b-b237-b7d1e83557d3",
+        "WEATHERXM_API_URL": "https://pro.weatherxm.com/api/v1",
+        "PINATA_GATEWAY": "maroon-careful-wren-616.mypinata.cloud",
+        "BLOCKCHAIN_RPC_URL": "https://mainnet.base.org",
+        "BLOCKCHAIN_CHAIN_ID": "8453",
+        "BIOMASS_BASELINE_WINDOW_DAYS": "30",
+        "BIOMASS_HEALTHY_THRESHOLD": "0.65",
+        "BIOMASS_MODERATE_STRESS": "0.50",
+        "BIOMASS_SEVERE_STRESS": "0.35",
+        "DAMAGE_WEATHER_WEIGHT": "0.6",
+        "DAMAGE_SATELLITE_WEIGHT": "0.4"
+      }
+    },
+    "celery-worker": {
+      "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "cd data-processor && pip install -r requirements.txt"
+      },
+      "deploy": {
+        "startCommand": "cd data-processor && celery -A src.workers.celery_app worker --loglevel=info --concurrency=2",
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 10
+      },
+      "env": {
+        "PYTHON_VERSION": "3.10",
+        "ENVIRONMENT": "production",
+        "LOG_LEVEL": "INFO",
+        "WEATHERXM_API_KEY": "154184a5-6634-405b-b237-b7d1e83557d3",
+        "BLOCKCHAIN_RPC_URL": "https://mainnet.base.org"
+      }
+    },
+    "celery-beat": {
+      "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "cd data-processor && pip install -r requirements.txt"
+      },
+      "deploy": {
+        "startCommand": "cd data-processor && celery -A src.workers.celery_app beat --loglevel=info",
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 10
+      },
+      "env": {
+        "PYTHON_VERSION": "3.10",
+        "ENVIRONMENT": "production",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  },
+  "databases": {
+    "postgres": {
+      "type": "postgresql",
+      "variables": {
+        "DATABASE_URL": "${{Postgres.DATABASE_URL}}"
+      }
+    },
+    "redis": {
+      "type": "redis",
+      "variables": {
+        "REDIS_URL": "${{Redis.REDIS_URL}}",
+        "CELERY_BROKER_URL": "${{Redis.REDIS_URL}}",
+        "CELERY_RESULT_BACKEND": "${{Redis.REDIS_URL}}"
+      }
+    }
+  },
+  "regions": ["us-west1"],
+  "environments": {
+    "production": {
+      "services": {
+        "backend-api": {
+          "replicas": 1
+        },
+        "celery-worker": {
+          "replicas": 1
+        },
+        "celery-beat": {
+          "replicas": 1
+        }
+      }
+    }
+  }
+}
