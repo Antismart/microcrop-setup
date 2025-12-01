@@ -125,15 +125,10 @@ def setup_logging(
     
     # Set third-party loggers to WARNING to reduce noise
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("kafka").setLevel(logging.WARNING)
-    logging.getLogger("aiokafka").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("aiohttp").setLevel(logging.WARNING)
     logging.getLogger("celery").setLevel(logging.INFO)
     logging.getLogger("redis").setLevel(logging.WARNING)
-    logging.getLogger("boto3").setLevel(logging.WARNING)
-    logging.getLogger("botocore").setLevel(logging.WARNING)
-    logging.getLogger("s3transfer").setLevel(logging.WARNING)
     
     # Log startup message
     root_logger.info(

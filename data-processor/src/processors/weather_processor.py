@@ -80,10 +80,7 @@ class WeatherProcessor:
             
             # Store in TimescaleDB (will implement with storage client)
             # await self.timescale_client.store_weather_data(weather_data, plot_id, policy_id)
-            
-            # Emit Kafka event (will implement with Kafka client)
-            # await self.kafka_producer.send_weather_update(weather_data, plot_id)
-            
+
             self.logger.debug(f"Weather update processed for plot {plot_id}")
             
         except Exception as e:
