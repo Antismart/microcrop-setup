@@ -1,0 +1,14 @@
+[dotenv@17.2.3] injecting env (39) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+╔═══════════════════════════════════════╗
+║   MicroCrop Backend Server Running    ║
+╚═══════════════════════════════════════╝
+  
+  Environment: development
+  Port: 3000
+  Health Check: http://localhost:3000/health
+  
+  Ready to serve requests...
+  
+✓ Redis connected successfully
+✓ Database connected successfully
