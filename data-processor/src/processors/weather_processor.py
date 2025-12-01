@@ -37,12 +37,12 @@ class WeatherProcessor:
         self.logger = logger
         
         # Thresholds from config
-        self.drought_rainfall_threshold = settings.DROUGHT_RAINFALL_THRESHOLD_MM
-        self.drought_days_threshold = settings.DROUGHT_CONSECUTIVE_DAYS
-        self.flood_daily_threshold = settings.FLOOD_DAILY_THRESHOLD_MM
-        self.flood_intensity_threshold = settings.FLOOD_INTENSITY_THRESHOLD_MM_H
-        self.heat_temp_threshold = settings.HEAT_TEMPERATURE_THRESHOLD_C
-        self.heat_days_threshold = settings.HEAT_CONSECUTIVE_DAYS
+        self.drought_rainfall_threshold = settings.DROUGHT_THRESHOLD_MM
+        self.drought_days_threshold = settings.DROUGHT_SEVERE_DAYS
+        self.flood_daily_threshold = settings.FLOOD_THRESHOLD_MM
+        self.flood_intensity_threshold = settings.FLOOD_SEVERE_MM
+        self.heat_temp_threshold = settings.HEAT_THRESHOLD_CELSIUS
+        self.heat_days_threshold = 7  # Default: 7 consecutive hot days threshold
         
         self.logger.info("WeatherProcessor initialized")
     
@@ -203,7 +203,7 @@ class WeatherProcessor:
             
             # Expected rainfall (historical average - simplified for now)
             days = (end_date - start_date).days + 1
-            expected_rainfall = self.settings.DROUGHT_RAINFALL_THRESHOLD_MM * days
+            expected_rainfall = self.drought_rainfall_threshold * days
             actual_rainfall = sum(daily_rainfall.values())
             rainfall_deficit = max(0, expected_rainfall - actual_rainfall)
             
