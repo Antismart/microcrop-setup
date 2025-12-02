@@ -226,7 +226,7 @@ export default function DashboardPage() {
             <CardTitle>Coverage Map</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
+            <div className="h-[400px] bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center">
               <div className="text-center">
                 <p className="text-gray-500">Interactive map coming soon</p>
                 <p className="text-sm text-gray-400 mt-2">

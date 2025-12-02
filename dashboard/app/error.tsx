@@ -30,24 +30,24 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="max-w-md w-full text-center">
         <div className="mb-6 flex justify-center">
-          <div className="p-4 bg-red-100 dark:bg-red-900/20 rounded-full">
-            <AlertTriangle className="h-12 w-12 text-red-600 dark:text-red-400" />
+          <div className="p-4 bg-red-50 rounded-full">
+            <AlertTriangle className="h-12 w-12 text-red-600" />
           </div>
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Something went wrong!
         </h1>
         
-        <p className="text-gray-600 dark:text-gray-400 mb-2">
+        <p className="text-gray-600 mb-2">
           We encountered an unexpected error. This has been logged and we'll look into it.
         </p>
         
         {process.env.NODE_ENV === 'development' && error.message && (
-          <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-left">
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg text-left">
             <p className="text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
               {error.message}
             </p>

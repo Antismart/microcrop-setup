@@ -149,23 +149,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
-        <Card className="shadow-2xl border-0">
+        <Card className="shadow-none border border-gray-100">
           <CardHeader className="space-y-3 pb-6 text-center">
             <div className="flex justify-center">
               <div className={`
                 p-3 rounded-2xl
-                ${subdomain === 'network' ? 'bg-blue-600' : 'bg-purple-600'}
+                ${subdomain === 'network' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}
               `}>
-                <Icon className="h-8 w-8 text-white" />
+                <Icon className="h-8 w-8" />
               </div>
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold">{branding.title}</CardTitle>
-              <p className="text-sm font-medium text-gray-600 mt-1">{branding.subtitle}</p>
+              <CardTitle className="text-2xl font-bold tracking-tight">{branding.title}</CardTitle>
+              <p className="text-sm text-gray-500 mt-2">{branding.subtitle}</p>
             </div>
-            <CardDescription className="text-sm">
+            <CardDescription className="text-sm text-gray-400">
               {branding.description}
             </CardDescription>
           </CardHeader>
