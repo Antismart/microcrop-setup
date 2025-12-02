@@ -46,6 +46,7 @@ const authenticate = (req, res, next) => {
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
+      cooperativeId: decoded.cooperativeId || null,
     };
 
     // Log successful authentication (only in development)
@@ -169,6 +170,7 @@ const optionalAuth = (req, res, next) => {
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
+      cooperativeId: decoded.cooperativeId || null,
     };
 
     next();
@@ -223,9 +225,42 @@ const checkResourceOwnership = (paramName = 'id') => {
   };
 };
 
+/**
+ * Convenience middleware for requiring a single role
+ * @param {string} role - Required role
+ */
+const requireRole = (role) => {
+  return authorize(role);
+};
+
+/**
+ * Middleware to check if user has cooperativeId
+ * Used for cooperative-specific routes
+ */
+const requireCooperative = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Not authenticated',
+    });
+  }
+
+  if (!req.user.cooperativeId) {
+    return res.status(403).json({
+      success: false,
+      error: 'Access denied',
+      message: 'User is not associated with a cooperative',
+    });
+  }
+
+  next();
+};
+
 module.exports = {
   authenticate,
   authorize,
+  requireRole,
   optionalAuth,
   checkResourceOwnership,
+  requireCooperative,
 };

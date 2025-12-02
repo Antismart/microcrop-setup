@@ -73,6 +73,7 @@ const register = async (userData) => {
       email: true,
       phone: true,
       role: true,
+      cooperativeId: true,
       isActive: true,
       emailVerified: true,
       createdAt: true,
@@ -80,11 +81,12 @@ const register = async (userData) => {
     },
   });
 
-  // Generate tokens
+  // Generate tokens with cooperativeId if applicable
   const tokenPayload = {
     userId: user.id,
     email: user.email,
     role: user.role,
+    cooperativeId: user.cooperativeId || null,
   };
 
   const token = generateToken(tokenPayload);
@@ -93,6 +95,7 @@ const register = async (userData) => {
   logger.info(`User registered successfully: ${user.email}`, {
     userId: user.id,
     role: user.role,
+    cooperativeId: user.cooperativeId,
   });
 
   return {
@@ -144,11 +147,12 @@ const login = async (email, password) => {
     },
   });
 
-  // Generate tokens
+  // Generate tokens with cooperativeId if applicable
   const tokenPayload = {
     userId: user.id,
     email: user.email,
     role: user.role,
+    cooperativeId: user.cooperativeId || null,
   };
 
   const token = generateToken(tokenPayload);
@@ -160,6 +164,7 @@ const login = async (email, password) => {
   logger.info(`User logged in successfully: ${user.email}`, {
     userId: user.id,
     role: user.role,
+    cooperativeId: user.cooperativeId,
   });
 
   return {
@@ -188,6 +193,7 @@ const refreshAccessToken = async (refreshToken) => {
         id: true,
         email: true,
         role: true,
+        cooperativeId: true,
         isActive: true,
       },
     });
@@ -204,11 +210,12 @@ const refreshAccessToken = async (refreshToken) => {
       throw error;
     }
 
-    // Generate new tokens
+    // Generate new tokens with cooperativeId
     const tokenPayload = {
       userId: user.id,
       email: user.email,
       role: user.role,
+      cooperativeId: user.cooperativeId || null,
     };
 
     const newToken = generateToken(tokenPayload);
@@ -216,6 +223,7 @@ const refreshAccessToken = async (refreshToken) => {
 
     logger.info(`Token refreshed for user: ${user.email}`, {
       userId: user.id,
+      cooperativeId: user.cooperativeId,
     });
 
     return {

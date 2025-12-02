@@ -6,13 +6,41 @@ const prisma = new PrismaClient();
 /**
  * Get cooperative dashboard statistics
  * GET /api/cooperative/stats
+ * Filters data by cooperativeId from authenticated user
  */
 const getDashboardStats = async (req, res) => {
   try {
+    // Get cooperativeId from authenticated user
+    const cooperativeId = req.user.cooperativeId;
+
+    if (!cooperativeId) {
+      return res.status(403).json({
+        success: false,
+        error: 'User is not associated with a cooperative',
+      });
+    }
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    // Get cooperative details
+    const cooperative = await prisma.cooperative.findUnique({
+      where: { id: cooperativeId },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+      },
+    });
+
+    if (!cooperative) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cooperative not found',
+      });
+    }
 
     const [
       totalFarmers,
@@ -26,12 +54,15 @@ const getDashboardStats = async (req, res) => {
       pendingPayouts,
       plotStats,
     ] = await Promise.all([
-      // Total farmers
-      prisma.farmer.count(),
+      // Total farmers in this cooperative
+      prisma.farmer.count({
+        where: { cooperativeId },
+      }),
 
       // Last month farmers
       prisma.farmer.count({
         where: {
+          cooperativeId,
           createdAt: {
             gte: lastMonth,
             lt: startOfMonth,
@@ -39,18 +70,22 @@ const getDashboardStats = async (req, res) => {
         },
       }),
 
-      // Active policies
+      // Active policies for this cooperative
       prisma.policy.count({
         where: {
+          cooperativeId,
           status: 'ACTIVE',
         },
       }),
 
-      // Total policies
-      prisma.policy.count(),
+      // Total policies for this cooperative
+      prisma.policy.count({
+        where: { cooperativeId },
+      }),
 
-      // Premium stats
+      // Premium stats for this cooperative
       prisma.policy.aggregate({
+        where: { cooperativeId },
         _sum: {
           premium: true,
         },
@@ -59,6 +94,7 @@ const getDashboardStats = async (req, res) => {
       // Last month premiums
       prisma.policy.aggregate({
         where: {
+          cooperativeId,
           createdAt: {
             gte: lastMonth,
             lt: startOfMonth,
@@ -69,9 +105,12 @@ const getDashboardStats = async (req, res) => {
         },
       }),
 
-      // Claims this month
+      // Claims this month for this cooperative
       prisma.damageAssessment.count({
         where: {
+          policy: {
+            cooperativeId,
+          },
           createdAt: {
             gte: startOfMonth,
           },
@@ -81,6 +120,9 @@ const getDashboardStats = async (req, res) => {
       // Last month claims
       prisma.damageAssessment.count({
         where: {
+          policy: {
+            cooperativeId,
+          },
           createdAt: {
             gte: lastMonth,
             lt: startOfMonth,
@@ -88,9 +130,12 @@ const getDashboardStats = async (req, res) => {
         },
       }),
 
-      // Pending payouts
+      // Pending payouts for this cooperative
       prisma.payout.aggregate({
         where: {
+          policy: {
+            cooperativeId,
+          },
           status: {
             in: ['PENDING', 'PROCESSING'],
           },
@@ -101,8 +146,13 @@ const getDashboardStats = async (req, res) => {
         _count: true,
       }),
 
-      // Plot coverage area
+      // Plot coverage area for this cooperative
       prisma.plot.aggregate({
+        where: {
+          farmer: {
+            cooperativeId,
+          },
+        },
         _sum: {
           size: true,
         },
@@ -147,6 +197,12 @@ const getDashboardStats = async (req, res) => {
 
     res.json({
       success: true,
+      role: 'COOPERATIVE',
+      cooperative: {
+        id: cooperative.id,
+        name: cooperative.name,
+        status: cooperative.status,
+      },
       totalFarmers,
       activePolicies,
       totalPremiumCollected,
@@ -161,7 +217,9 @@ const getDashboardStats = async (req, res) => {
       },
     });
 
-    logger.info('Dashboard stats retrieved', {
+    logger.info('Cooperative dashboard stats retrieved', {
+      cooperativeId,
+      cooperativeName: cooperative.name,
       totalFarmers,
       activePolicies,
       totalPremiumCollected,
@@ -179,10 +237,19 @@ const getDashboardStats = async (req, res) => {
 /**
  * Get revenue chart data
  * GET /api/cooperative/revenue-chart?period=30d
+ * Filters data by cooperativeId from authenticated user
  */
 const getRevenueChart = async (req, res) => {
   try {
     const { period = '30d' } = req.query;
+    const cooperativeId = req.user.cooperativeId;
+
+    if (!cooperativeId) {
+      return res.status(403).json({
+        success: false,
+        error: 'User is not associated with a cooperative',
+      });
+    }
 
     // Parse period
     const periodMap = {
@@ -196,9 +263,10 @@ const getRevenueChart = async (req, res) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Get policies and payouts grouped by date
+    // Get policies and payouts for this cooperative only
     const policies = await prisma.policy.findMany({
       where: {
+        cooperativeId,
         createdAt: {
           gte: startDate,
         },
@@ -211,6 +279,9 @@ const getRevenueChart = async (req, res) => {
 
     const payouts = await prisma.payout.findMany({
       where: {
+        policy: {
+          cooperativeId,
+        },
         completedAt: {
           gte: startDate,
         },
@@ -282,13 +353,14 @@ const getRevenueChart = async (req, res) => {
 
     res.json({
       success: true,
+      role: 'COOPERATIVE',
       period,
       labels,
       premiums: premiumsData,
       payouts: payoutsData,
     });
 
-    logger.info('Revenue chart data retrieved', { period, dataPoints: labels.length });
+    logger.info('Cooperative revenue chart data retrieved', { cooperativeId, period, dataPoints: labels.length });
   } catch (error) {
     logger.error('Error retrieving revenue chart:', error);
     res.status(500).json({
@@ -302,9 +374,19 @@ const getRevenueChart = async (req, res) => {
 /**
  * Get claims analytics
  * GET /api/cooperative/claims-analytics
+ * Filters data by cooperativeId from authenticated user
  */
 const getClaimsAnalytics = async (req, res) => {
   try {
+    const cooperativeId = req.user.cooperativeId;
+
+    if (!cooperativeId) {
+      return res.status(403).json({
+        success: false,
+        error: 'User is not associated with a cooperative',
+      });
+    }
+
     const [
       totalClaims,
       claimsByStatus,
@@ -312,18 +394,32 @@ const getClaimsAnalytics = async (req, res) => {
       claimsByType,
       recentClaims,
     ] = await Promise.all([
-      // Total claims
-      prisma.damageAssessment.count(),
+      // Total claims for this cooperative
+      prisma.damageAssessment.count({
+        where: {
+          policy: {
+            cooperativeId,
+          },
+        },
+      }),
 
       // Claims by status (using payout status as proxy)
       prisma.payout.groupBy({
         by: ['status'],
+        where: {
+          policy: {
+            cooperativeId,
+          },
+        },
         _count: true,
       }),
 
-      // Average claim amount
+      // Average claim amount for this cooperative
       prisma.payout.aggregate({
         where: {
+          policy: {
+            cooperativeId,
+          },
           status: 'COMPLETED',
         },
         _avg: {
@@ -331,18 +427,24 @@ const getClaimsAnalytics = async (req, res) => {
         },
       }),
 
-      // Claims by type (using policy coverage type)
+      // Claims by type (using policy coverage type) for this cooperative
       prisma.policy.groupBy({
         by: ['coverageType'],
         _count: true,
         where: {
+          cooperativeId,
           status: 'CLAIMED',
         },
       }),
 
-      // Recent claims
+      // Recent claims for this cooperative
       prisma.damageAssessment.findMany({
         take: 10,
+        where: {
+          policy: {
+            cooperativeId,
+          },
+        },
         orderBy: {
           createdAt: 'desc',
         },
@@ -365,6 +467,7 @@ const getClaimsAnalytics = async (req, res) => {
 
     res.json({
       success: true,
+      role: 'COOPERATIVE',
       totalClaims,
       averageClaimAmount: averageClaimAmount._avg.amount || 0,
       claimsByStatus: claimsByStatus.map(item => ({
@@ -387,7 +490,7 @@ const getClaimsAnalytics = async (req, res) => {
       })),
     });
 
-    logger.info('Claims analytics retrieved');
+    logger.info('Cooperative claims analytics retrieved', { cooperativeId, totalClaims });
   } catch (error) {
     logger.error('Error retrieving claims analytics:', error);
     res.status(500).json({
