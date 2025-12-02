@@ -85,6 +85,7 @@ const satelliteRoutes = require('./api/routes/satellite.routes');
 const paymentRoutes = require('./api/routes/payment.routes');
 const claimRoutes = require('./api/routes/claim.routes');
 const adminRoutes = require('./api/routes/admin.routes');
+const cooperativeRoutes = require('./api/routes/cooperative.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/ussd', ussdRoutes);
@@ -96,6 +97,7 @@ app.use('/api/satellite', satelliteRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/claims', claimRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/cooperative', cooperativeRoutes);
 
 // 404 handler
 app.use((req, res) => {
