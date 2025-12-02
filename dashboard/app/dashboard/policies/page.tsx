@@ -76,12 +76,14 @@ export default function PoliciesPage() {
       value: total.toString(),
       icon: FileText,
       description: "All time policies",
+      color: "blue"
     },
     {
       title: "Active Policies",
       value: policies.filter((p) => p.status === PolicyStatus.ACTIVE).length.toString(),
       icon: ShieldCheck,
       description: "Currently active",
+      color: "green"
     },
     {
       title: "Total Coverage",
@@ -92,12 +94,14 @@ export default function PoliciesPage() {
       ),
       icon: DollarSign,
       description: "Active coverage value",
+      color: "yellow"
     },
     {
       title: "Pending Claims",
       value: policies.filter((p) => p.status === PolicyStatus.CLAIMED).length.toString(),
       icon: Calendar,
       description: "Claims in process",
+      color: "purple"
     },
   ]
 
@@ -106,8 +110,8 @@ export default function PoliciesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Policies</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Policies</h1>
+          <p className="text-gray-500">
             Manage insurance policies and coverage
           </p>
         </div>
@@ -119,26 +123,38 @@ export default function PoliciesPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                {stat.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {stats.map((stat) => {
+          const colorClasses = {
+            blue: "bg-blue-50 text-blue-600",
+            green: "bg-green-50 text-green-600",
+            yellow: "bg-yellow-50 text-yellow-600",
+            purple: "bg-purple-50 text-purple-600",
+            red: "bg-red-50 text-red-600"
+          }
+          
+          return (
+            <Card key={stat.title} className="hover:shadow-lg transition-all duration-200 border-gray-100">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">
+                  {stat.title}
+                </CardTitle>
+                <div className={`p-2 rounded-full ${colorClasses[stat.color as keyof typeof colorClasses]}`}>
+                  <stat.icon className="h-4 w-4" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                <p className="text-xs text-gray-400 mt-1">
+                  {stat.description}
+                </p>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       {/* Filters and Search */}
-      <Card>
+      <Card className="border-gray-100 shadow-sm">
         <CardHeader>
           <CardTitle>All Policies</CardTitle>
           <CardDescription>

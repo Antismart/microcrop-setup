@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Download, Upload, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, Loader2 } from "lucide-react"
+import { Download, Upload, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, Loader2, Users, UserCheck, UserMinus, UserX } from "lucide-react"
 import { Farmer, FarmerStatus } from "@/types"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { ListPageSkeleton, StatsSkeleton } from "@/components/ui/skeleton-loaders"
@@ -150,52 +150,64 @@ export default function FarmersPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="hover:shadow-lg transition-all duration-200 border-gray-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Farmers</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Total Farmers</CardTitle>
+            <div className="p-2 bg-blue-50 rounded-full">
+              <Users className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{farmersData?.total || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-gray-900">{farmersData?.total || 0}</div>
+            <p className="text-xs text-gray-400 mt-1">
               Across all cooperatives
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-lg transition-all duration-200 border-gray-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Active</CardTitle>
+            <div className="p-2 bg-green-50 rounded-full">
+              <UserCheck className="h-4 w-4 text-green-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-gray-900">
               {farmersData?.data?.filter((f: any) => f.status === "active").length || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-400 mt-1">
               With active policies
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-lg transition-all duration-200 border-gray-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Inactive</CardTitle>
+            <div className="p-2 bg-yellow-50 rounded-full">
+              <UserMinus className="h-4 w-4 text-yellow-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-gray-900">
               {farmersData?.data?.filter((f: any) => f.status === "inactive").length || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-400 mt-1">
               No active policies
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-lg transition-all duration-200 border-gray-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Suspended</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Suspended</CardTitle>
+            <div className="p-2 bg-red-50 rounded-full">
+              <UserX className="h-4 w-4 text-red-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-gray-900">
               {farmersData?.data?.filter((f: any) => f.status === "suspended").length || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-400 mt-1">
               Requires attention
             </p>
           </CardContent>
@@ -203,7 +215,7 @@ export default function FarmersPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="border-gray-100 shadow-sm">
         <CardHeader>
           <CardTitle>Search & Filter</CardTitle>
           <CardDescription>

@@ -1,6 +1,17 @@
 "use client"
 
-import { Users, FileText, DollarSign, AlertCircle, TrendingUp, TrendingDown } from "lucide-react"
+import { 
+  Users, 
+  FileText, 
+  DollarSign, 
+  AlertCircle, 
+  TrendingUp, 
+  TrendingDown,
+  UserPlus,
+  FileCheck,
+  CreditCard,
+  Activity
+} from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useDashboardStats, useRevenueChart } from "@/hooks/use-data"
 import { formatCurrency, calculatePercentageChange } from "@/lib/utils"
@@ -13,24 +24,35 @@ function StatCard({
   change,
   icon: Icon,
   prefix = "",
+  color = "blue"
 }: {
   title: string
   value: number
   change?: number
   icon: any
   prefix?: string
+  color?: "blue" | "green" | "yellow" | "red"
 }) {
   const isPositive = change && change > 0
   const showChange = change !== undefined && change !== 0
 
+  const colorClasses = {
+    blue: "bg-blue-50 text-blue-600",
+    green: "bg-green-50 text-green-600",
+    yellow: "bg-yellow-50 text-yellow-600",
+    red: "bg-red-50 text-red-600"
+  }
+
   return (
-    <Card>
+    <Card className="hover:shadow-lg transition-all duration-200 border-gray-100">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <CardTitle className="text-sm font-medium text-gray-500">{title}</CardTitle>
+        <div className={`p-2 rounded-full ${colorClasses[color]}`}>
+          <Icon className="h-4 w-4" />
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
+        <div className="text-2xl font-bold text-gray-900">
           {prefix}
           {typeof value === "number" && prefix === "$"
             ? formatCurrency(value)
@@ -43,10 +65,10 @@ function StatCard({
             ) : (
               <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
             )}
-            <span className={isPositive ? "text-green-600" : "text-red-600"}>
+            <span className={isPositive ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
               {Math.abs(change).toFixed(1)}%
             </span>
-            <span className="ml-1">from last month</span>
+            <span className="ml-1 text-gray-400">from last month</span>
           </p>
         )}
       </CardContent>
@@ -89,11 +111,13 @@ export default function DashboardPage() {
             value={stats?.totalFarmers || 0}
             change={stats?.trends?.farmersGrowth}
             icon={Users}
+            color="blue"
           />
           <StatCard
             title="Active Policies"
             value={stats?.activePolicies || 0}
             icon={FileText}
+            color="green"
           />
           <StatCard
             title="Premium Collected"
@@ -101,20 +125,22 @@ export default function DashboardPage() {
             change={stats?.trends?.premiumGrowth}
             icon={DollarSign}
             prefix="$"
+            color="yellow"
           />
           <StatCard
             title="Claims This Month"
             value={stats?.claimsThisMonth || 0}
             change={stats?.trends?.claimsGrowth}
             icon={AlertCircle}
+            color="red"
           />
         </div>
 
         {/* Charts Row */}
         <div className="grid gap-4 md:grid-cols-2">
-          <Card>
+          <Card className="border-gray-100 shadow-sm">
             <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">Revenue Overview</CardTitle>
               <CardDescription>Premium collection vs payouts over time</CardDescription>
             </CardHeader>
             <CardContent>
@@ -134,9 +160,9 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-gray-100 shadow-sm">
             <CardHeader>
-              <CardTitle>Policy Distribution</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">Policy Distribution</CardTitle>
               <CardDescription>Policies by crop type</CardDescription>
             </CardHeader>
             <CardContent>
@@ -156,9 +182,9 @@ export default function DashboardPage() {
 
         {/* Additional Charts Row */}
         <div className="grid gap-4 md:grid-cols-2">
-          <Card>
+          <Card className="border-gray-100 shadow-sm">
             <CardHeader>
-              <CardTitle>Monthly Claims</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">Monthly Claims</CardTitle>
               <CardDescription>Claims submitted by status</CardDescription>
             </CardHeader>
             <CardContent>
@@ -180,39 +206,51 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-gray-100 shadow-sm">
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">Recent Activity</CardTitle>
               <CardDescription>Latest system events</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 mt-2 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">New farmer registered</p>
-                    <p className="text-xs text-muted-foreground">2 hours ago</p>
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-green-50 rounded-full">
+                    <UserPlus className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium text-gray-900">New farmer registered</p>
+                    <p className="text-xs text-gray-500">John Doe joined the cooperative</p>
+                    <p className="text-xs text-gray-400">2 hours ago</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Policy issued</p>
-                    <p className="text-xs text-muted-foreground">5 hours ago</p>
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-blue-50 rounded-full">
+                    <FileCheck className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium text-gray-900">Policy issued</p>
+                    <p className="text-xs text-gray-500">Policy #POL-2024-001 created</p>
+                    <p className="text-xs text-gray-400">5 hours ago</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 mt-2 bg-yellow-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Claim submitted</p>
-                    <p className="text-xs text-muted-foreground">1 day ago</p>
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-yellow-50 rounded-full">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium text-gray-900">Claim submitted</p>
+                    <p className="text-xs text-gray-500">Claim for drought damage</p>
+                    <p className="text-xs text-gray-400">1 day ago</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 mt-2 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Payment received</p>
-                    <p className="text-xs text-muted-foreground">2 days ago</p>
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-purple-50 rounded-full">
+                    <CreditCard className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium text-gray-900">Payment received</p>
+                    <p className="text-xs text-gray-500">Premium payment processed</p>
+                    <p className="text-xs text-gray-400">2 days ago</p>
                   </div>
                 </div>
               </div>
@@ -221,7 +259,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Coverage Map */}
-        <Card>
+        <Card className="border-gray-100 shadow-sm">
           <CardHeader>
             <CardTitle>Coverage Map</CardTitle>
           </CardHeader>
