@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios"
 import { env } from "@/lib/env"
+import { deleteCookie } from "@/lib/cookies"
 
 const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
@@ -57,6 +58,7 @@ class ApiClient {
   private clearAuthToken(): void {
     if (typeof window !== "undefined") {
       localStorage.removeItem("authToken")
+      deleteCookie("authToken")
     }
   }
 

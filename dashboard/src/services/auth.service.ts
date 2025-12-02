@@ -1,4 +1,5 @@
 import { apiClient } from "./api-client"
+import { setCookie, deleteCookie } from "@/lib/cookies"
 
 // Helper to get subdomain URL for role
 function getSubdomainUrlForRole(role: string): string {
@@ -75,9 +76,11 @@ export const authService = {
       
       // Backend returns: { success, message, user, token, refreshToken }
       if (response.success && response.token && response.user) {
-        // Store tokens in localStorage
+        // Store tokens in localStorage and cookies
         if (typeof window !== "undefined") {
           localStorage.setItem("authToken", response.token)
+          setCookie("authToken", response.token)
+          
           if (response.refreshToken) {
             localStorage.setItem("refreshToken", response.refreshToken)
           }
@@ -109,9 +112,11 @@ export const authService = {
       
       // Backend returns: { success, user, token, refreshToken }
       if (response.success && response.token && response.user) {
-        // Store tokens in localStorage
+        // Store tokens in localStorage and cookies
         if (typeof window !== "undefined") {
           localStorage.setItem("authToken", response.token)
+          setCookie("authToken", response.token)
+          
           if (response.refreshToken) {
             localStorage.setItem("refreshToken", response.refreshToken)
           }
@@ -141,9 +146,10 @@ export const authService = {
     try {
       await apiClient.post("/auth/logout")
     } finally {
-      // Clear tokens from localStorage regardless of API response
+      // Clear tokens from localStorage and cookies regardless of API response
       if (typeof window !== "undefined") {
         localStorage.removeItem("authToken")
+        deleteCookie("authToken")
         localStorage.removeItem("refreshToken")
         
         // Redirect to main domain login page
@@ -210,6 +216,8 @@ export const authService = {
       // Store new tokens
       if (typeof window !== "undefined") {
         localStorage.setItem("authToken", response.token)
+        setCookie("authToken", response.token)
+        
         if (response.refreshToken) {
           localStorage.setItem("refreshToken", response.refreshToken)
         }

@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { User, UserRole } from "../types"
+import { deleteCookie, setCookie } from "@/lib/cookies"
 
 interface AuthState {
   user: User | null
@@ -40,9 +41,10 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           error: null,
         })
-        // Store token in localStorage
+        // Store token in localStorage and cookies
         if (typeof window !== "undefined") {
           localStorage.setItem("authToken", token)
+          setCookie("authToken", token)
         }
       },
       
@@ -53,9 +55,10 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           error: null,
         })
-        // Clear token from localStorage
+        // Clear token from localStorage and cookies
         if (typeof window !== "undefined") {
           localStorage.removeItem("authToken")
+          deleteCookie("authToken")
         }
       },
       
