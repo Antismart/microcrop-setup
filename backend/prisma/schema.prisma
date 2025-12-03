@@ -68,7 +68,14 @@ enum TransactionStatus {
 enum UserRole {
   FARMER
   COOPERATIVE
+  COOPERATIVE_STAFF
   ADMIN
+}
+
+enum CooperativeStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
 }
 
 // Models
@@ -80,6 +87,8 @@ model User {
   firstName     String
   lastName      String
   role          UserRole  @default(FARMER)
+  cooperativeId String?   // Link to cooperative for COOPERATIVE and COOPERATIVE_STAFF users
+  cooperative   Cooperative? @relation(fields: [cooperativeId], references: [id])
   isActive      Boolean   @default(true)
   emailVerified Boolean   @default(false)
   createdAt     DateTime  @default(now())
@@ -93,21 +102,45 @@ model User {
   @@index([email])
   @@index([phone])
   @@index([role])
+  @@index([cooperativeId])
+}
+
+model Cooperative {
+  id                 String   @id @default(uuid())
+  name               String
+  registrationNumber String   @unique
+  email              String   @unique
+  phone              String
+  county             String
+  address            String
+  status             CooperativeStatus @default(ACTIVE)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  users              User[]
+  farmers            Farmer[]
+  policies           Policy[]
+
+  @@index([registrationNumber])
+  @@index([email])
+  @@index([status])
 }
 
 model Farmer {
-  id          String    @id @default(uuid())
-  phoneNumber String    @unique
-  nationalId  String?   @unique
-  firstName   String
-  lastName    String
-  county      String
-  subCounty   String
-  ward        String?
-  village     String?
-  kycStatus   KycStatus @default(PENDING)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String    @id @default(uuid())
+  phoneNumber   String    @unique
+  nationalId    String?   @unique
+  firstName     String
+  lastName      String
+  cooperativeId String?
+  cooperative   Cooperative? @relation(fields: [cooperativeId], references: [id])
+  county        String
+  subCounty     String
+  ward          String?
+  village       String?
+  kycStatus     KycStatus @default(PENDING)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   plots        Plot[]
   policies     Policy[]
@@ -117,6 +150,7 @@ model Farmer {
 
   @@index([phoneNumber])
   @@index([nationalId])
+  @@index([cooperativeId])
 }
 
 model Plot {
@@ -146,6 +180,8 @@ model Policy {
   policyNumber     String        @unique
   farmerId         String
   plotId           String
+  cooperativeId    String?
+  cooperative      Cooperative?  @relation(fields: [cooperativeId], references: [id])
   coverageType     CoverageType
   sumInsured       Float
   premium          Float
@@ -166,6 +202,7 @@ model Policy {
   @@index([plotId])
   @@index([policyNumber])
   @@index([status])
+  @@index([cooperativeId])
 }
 
 model WeatherEvent {
