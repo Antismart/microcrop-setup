@@ -241,7 +241,8 @@ const getAdminDashboardStats = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve admin dashboard statistics',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 };
@@ -368,7 +369,8 @@ const getAdminRevenueChart = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve admin revenue chart data',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 };
@@ -426,7 +428,8 @@ const getSystemHealth = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve system health metrics',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 };
