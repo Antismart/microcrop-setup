@@ -22,6 +22,9 @@ class ApiClient {
         const token = this.getAuthToken()
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
+          console.log('[API Client] Token attached to request:', token.substring(0, 20) + '...')
+        } else {
+          console.warn('[API Client] No auth token found in localStorage')
         }
         return config
       },
@@ -33,10 +36,15 @@ class ApiClient {
       (response) => response,
       async (error) => {
         if (error.response?.status === 401) {
+          console.error('[API Client] 401 Unauthorized:', {
+            url: error.config?.url,
+            message: error.response?.data?.message || error.response?.data?.error,
+            hasToken: !!this.getAuthToken()
+          })
           // Handle unauthorized - redirect to login
           this.clearAuthToken()
           if (typeof window !== "undefined") {
-            window.location.href = "/login"
+            window.location.href = "/auth/login"
           }
         }
         return Promise.reject(error)
