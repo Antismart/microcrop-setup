@@ -174,8 +174,8 @@ export default function RegisterPage() {
         message: "Welcome to MicroCrop!",
       })
 
-      // Redirect to dashboard
-      router.push("/dashboard")
+      // Force full page reload to ensure cookies are set before middleware runs
+      window.location.href = "/dashboard"
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Registration failed"
       setError(errorMessage)

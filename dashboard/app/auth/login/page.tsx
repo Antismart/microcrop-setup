@@ -132,8 +132,8 @@ export default function LoginPage() {
         message: `Welcome back, ${response.user.firstName}!`,
       })
 
-      // Redirect to dashboard
-      router.push("/dashboard")
+      // Force full page reload to ensure cookies are set before middleware runs
+      window.location.href = "/dashboard"
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Login failed"
       setError(errorMessage)
