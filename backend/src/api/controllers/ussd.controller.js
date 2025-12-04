@@ -56,7 +56,13 @@ class UssdController {
       res.send(response);
 
     } catch (error) {
-      logger.error('USSD Error:', error);
+      logger.error('USSD Error:', {
+        message: error.message,
+        stack: error.stack,
+        phoneNumber: req.body.phoneNumber,
+        text: req.body.text,
+        sessionId: req.body.sessionId
+      });
       res.set('Content-Type', 'text/plain');
       res.send('END An error occurred. Please try again later.');
     }
