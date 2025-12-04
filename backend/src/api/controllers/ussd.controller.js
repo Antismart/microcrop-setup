@@ -3,9 +3,22 @@ const prisma = require('../../config/database');
 const logger = require('../../config/logger');
 const PaymentService = require('../../services/payment.service');
 
-const SESSION_TTL = 300; // 5 minutes
+const SESSION_TTL = 600; // 10 minutes
 
 class UssdController {
+  // Subcounty mappings for major counties
+  getSubCounties(county) {
+    const subCounties = {
+      'Nairobi': ['Westlands', 'Dagoretti North', 'Dagoretti South', 'Langata', 'Kibra', 'Roysambu', 'Kasarani', 'Ruaraka', 'Embakasi South', 'Embakasi North', 'Embakasi Central', 'Embakasi East', 'Embakasi West', 'Makadara', 'Kamukunji', 'Starehe', 'Mathare'],
+      'Kiambu': ['Gatundu South', 'Gatundu North', 'Juja', 'Thika Town', 'Ruiru', 'Githunguri', 'Kiambu', 'Kiambaa', 'Kabete', 'Kikuyu', 'Limuru', 'Lari'],
+      'Machakos': ['Machakos Town', 'Mavoko', 'Kathiani', 'Yatta', 'Kangundo', 'Matungulu', 'Mwala', 'Masinga'],
+      'Nakuru': ['Nakuru Town East', 'Nakuru Town West', 'Naivasha', 'Gilgil', 'Molo', 'Njoro', 'Rongai', 'Subukia', 'Bahati', 'Kuresoi South', 'Kuresoi North'],
+      'Kisumu': ['Kisumu East', 'Kisumu West', 'Kisumu Central', 'Seme', 'Nyando', 'Muhoroni', 'Nyakach'],
+      'Meru': ['Imenti North', 'Imenti South', 'Imenti Central', 'Tigania East', 'Tigania West', 'Igembe North', 'Igembe South', 'Igembe Central', 'Buuri'],
+    };
+    return subCounties[county] || [];
+  }
+
   async handleUssdRequest(req, res) {
     try {
       const { sessionId, serviceCode, phoneNumber, text } = req.body;
@@ -110,13 +123,43 @@ class UssdController {
         }
         sessionData.data.county = selectedCounty;
         sessionData.substep = 'SUBCOUNTY';
-        return `CON Enter your Sub-County name in ${selectedCounty}:`;
+
+        // Get subcounties for selected county
+        const subCounties = this.getSubCounties(selectedCounty);
+        if (subCounties.length === 0) {
+          return `CON Enter your Sub-County name in ${selectedCounty}:`;
+        }
+
+        // Build menu with first 9 subcounties
+        let subCountyMenu = `CON Select Sub-County in ${selectedCounty}:\n`;
+        subCounties.slice(0, 9).forEach((sc, idx) => {
+          subCountyMenu += `${idx + 1}. ${sc}\n`;
+        });
+        return subCountyMenu;
 
       case 'SUBCOUNTY':
-        if (!input || input.length < 3) {
-          return 'CON Invalid Sub-County. Please enter your Sub-County name:';
+        const availableSubCounties = this.getSubCounties(sessionData.data.county);
+
+        if (availableSubCounties.length === 0) {
+          // Manual text entry (for "Other" counties)
+          if (!input || input.length < 3) {
+            return 'CON Invalid Sub-County. Please enter your Sub-County name:';
+          }
+          sessionData.data.subCounty = input;
+        } else {
+          // Menu selection
+          const selectedIndex = parseInt(input);
+          const selectedSubCounty = availableSubCounties[selectedIndex - 1];
+
+          if (!selectedSubCounty) {
+            let subCountyMenu = `CON Invalid selection. Select Sub-County in ${sessionData.data.county}:\n`;
+            availableSubCounties.slice(0, 9).forEach((sc, idx) => {
+              subCountyMenu += `${idx + 1}. ${sc}\n`;
+            });
+            return subCountyMenu;
+          }
+          sessionData.data.subCounty = selectedSubCounty;
         }
-        sessionData.data.subCounty = input;
         sessionData.substep = 'CONFIRM';
         
         const [firstName, ...lastNameParts] = sessionData.data.name.split(' ');
