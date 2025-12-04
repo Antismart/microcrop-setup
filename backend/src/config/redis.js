@@ -6,11 +6,15 @@ const isRedisConfigured = process.env.REDIS_HOST || process.env.REDIS_URL;
 let redis;
 
 if (isRedisConfigured) {
-  redis = new Redis({
+  // Use REDIS_URL if available (Render/cloud), otherwise use individual config
+  const redisConfig = process.env.REDIS_URL || {
     host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379,
     password: process.env.REDIS_PASSWORD || undefined,
     db: process.env.REDIS_DB || 0,
+  };
+
+  redis = new Redis(redisConfig, {
     retryStrategy(times) {
       // Stop retrying after 3 attempts in production
       if (process.env.NODE_ENV === 'production' && times > 3) {
