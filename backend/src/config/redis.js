@@ -59,6 +59,7 @@ if (isRedisConfigured) {
   redis = {
     get: async () => null,
     set: async () => 'OK',
+    setex: async () => 'OK',
     del: async () => 0,
     expire: async () => 1,
     exists: async () => 0,
