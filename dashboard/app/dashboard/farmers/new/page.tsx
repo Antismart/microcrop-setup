@@ -372,7 +372,7 @@ export default function CreateFarmerPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         <SelectItem value="Group A">Group A</SelectItem>
                         <SelectItem value="Group B">Group B</SelectItem>
                         <SelectItem value="Group C">Group C</SelectItem>
