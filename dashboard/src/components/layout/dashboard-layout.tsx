@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import {
   Home,
   Users,
@@ -78,10 +78,9 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname()
-  const router = useRouter()
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { user, logout } = useAuthStore()
-  const { subdomain, isCooperative, isAdmin } = useSubdomain()
+  const { subdomain, isAdmin } = useSubdomain()
   
   const branding = getSubdomainBranding(subdomain)
   const BrandIcon = branding.icon
