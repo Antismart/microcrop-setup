@@ -11,7 +11,6 @@ import {
   AlertCircle,
   BarChart3,
   Settings,
-  Bell,
   Menu,
   X,
   LogOut,
@@ -22,7 +21,6 @@ import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
 import { useUIStore } from "../../store/ui.store"
 import { useAuthStore } from "../../store/auth.store"
-import { useNotificationStore } from "../../store/ui.store"
 import { useSubdomain } from "../../hooks/use-subdomain"
 
 const adminNavigation = [
@@ -83,7 +81,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter()
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { user, logout } = useAuthStore()
-  const { unreadCount } = useNotificationStore()
   const { subdomain, isCooperative, isAdmin } = useSubdomain()
   
   const branding = getSubdomainBranding(subdomain)
@@ -183,15 +180,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
 
             <div className="flex items-center space-x-4 ml-auto">
-              {/* Notifications */}
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                <Bell className="w-6 h-6" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+              {/* User menu will go here if needed */}
             </div>
           </div>
         </header>
