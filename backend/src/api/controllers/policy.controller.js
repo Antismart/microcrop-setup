@@ -722,6 +722,86 @@ const cancelPolicy = async (req, res) => {
   }
 };
 
+/**
+ * Get all policies with pagination (for cooperative dashboard)
+ */
+const getPolicies = async (req, res) => {
+  try {
+    const { page = 1, pageSize = 10, search = '', status } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const take = parseInt(pageSize);
+
+    // Build where clause
+    const where = {};
+
+    // Filter by cooperativeId if user is cooperative
+    if (req.user && req.user.cooperativeId) {
+      where.cooperativeId = req.user.cooperativeId;
+    }
+
+    // Filter by status if provided
+    if (status) {
+      where.status = status;
+    }
+
+    // Search by policy number or farmer name
+    if (search) {
+      where.OR = [
+        { policyNumber: { contains: search, mode: 'insensitive' } },
+        { farmer: { firstName: { contains: search, mode: 'insensitive' } } },
+        { farmer: { lastName: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    // Get policies with farmer and plot info
+    const [policies, total] = await Promise.all([
+      prisma.policy.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          farmer: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phoneNumber: true,
+            },
+          },
+          plot: {
+            select: {
+              id: true,
+              name: true,
+              acreage: true,
+              cropType: true,
+            },
+          },
+        },
+      }),
+      prisma.policy.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: policies,
+      pagination: {
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
+        total,
+        totalPages: Math.ceil(total / parseInt(pageSize)),
+      },
+    });
+  } catch (error) {
+    logger.error('Error fetching policies:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch policies',
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   getQuote,
   purchasePolicy,
@@ -729,4 +809,5 @@ module.exports = {
   getPolicyStatus,
   activatePolicy,
   cancelPolicy,
+  getPolicies,
 };

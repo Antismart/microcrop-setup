@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const policyController = require('../controllers/policy.controller');
+const { authenticate } = require('../middlewares/auth.middleware');
 
 /**
  * Policy Routes
- * 
+ *
+ * GET    /api/policies                - Get all policies (paginated, filtered by cooperative)
  * POST   /api/policies/quote          - Get insurance quote
  * POST   /api/policies/purchase       - Purchase insurance policy
  * GET    /api/policies/farmer/:farmerId - Get farmer's policies
@@ -12,6 +14,9 @@ const policyController = require('../controllers/policy.controller');
  * PUT    /api/policies/:id/activate   - Activate policy (after payment)
  * PUT    /api/policies/:id/cancel     - Cancel pending policy
  */
+
+// Get all policies (for dashboard)
+router.get('/', authenticate, policyController.getPolicies);
 
 // Get insurance quote
 router.post('/quote', policyController.getQuote);
