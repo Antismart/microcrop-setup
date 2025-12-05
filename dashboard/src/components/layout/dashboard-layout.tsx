@@ -183,17 +183,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
 
             <div className="flex items-center space-x-4 ml-auto">
-              {/* Subdomain Indicator */}
-              {(isCooperative || isAdmin) && (
-                <div className={cn(
-                  "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
-                  isCooperative ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                )}>
-                  <BrandIcon className="w-3.5 h-3.5" />
-                  {isCooperative ? "Cooperative Network" : "Admin Portal"}
-                </div>
-              )}
-
               {/* Notifications */}
               <button className="relative p-2 text-gray-600 hover:text-gray-900">
                 <Bell className="w-6 h-6" />
