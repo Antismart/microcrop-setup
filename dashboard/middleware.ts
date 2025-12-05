@@ -34,42 +34,17 @@ export function middleware(request: NextRequest) {
   if (isProtectedRoute) {
     // Get auth token from cookie
     const token = request.cookies.get('authToken')?.value
-    const authStorage = request.cookies.get('auth-storage')?.value
 
     // If no token, redirect to login
-    if (!token && !authStorage) {
+    if (!token) {
       const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(loginUrl)
     }
 
-    // Parse user data from storage
-    let userRole: string | null = null
-    if (authStorage) {
-      try {
-        const authData = JSON.parse(authStorage)
-        userRole = authData?.state?.user?.role || null
-      } catch (error) {
-        console.error('Failed to parse auth storage:', error)
-      }
-    }
-
-    // Check subdomain access based on user role
-    if (subdomain && userRole) {
-      const allowedRoles = SUBDOMAIN_ROLES[subdomain as keyof typeof SUBDOMAIN_ROLES] || []
-      
-      if (!allowedRoles.includes(userRole)) {
-        // Redirect to appropriate subdomain based on role
-        const correctSubdomain = getSubdomainForRole(userRole)
-        if (correctSubdomain !== subdomain) {
-          const redirectUrl = new URL(request.url)
-          redirectUrl.hostname = correctSubdomain 
-            ? `${correctSubdomain}.${getBaseDomain(hostname)}`
-            : getBaseDomain(hostname)
-          return NextResponse.redirect(redirectUrl)
-        }
-      }
-    }
+    // Note: Role-based subdomain access is enforced by backend API
+    // The middleware only checks for token presence
+    // Backend will return 403 if user tries to access unauthorized resources
   }
 
   // Add subdomain info to headers for use in components
