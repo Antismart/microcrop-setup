@@ -208,11 +208,11 @@ class UssdController {
 
   async handleMainMenu(sessionData, farmer, input, inputArray) {
     // Main menu for existing users
-    if (inputArray.length === 1) {
+    if (inputArray.length === 0 || inputArray.length === 1) {
       return `CON Welcome back, ${farmer.firstName}!\n1. Buy Insurance\n2. Check Policy\n3. Claim Status\n4. My Account\n5. Add Plot`;
     }
 
-    const mainChoice = inputArray[1];
+    const mainChoice = inputArray[0];
 
     switch (mainChoice) {
       case '1':
@@ -242,10 +242,10 @@ class UssdController {
     });
 
     if (plots.length === 0) {
-      return 'END You have no plots. Please add a plot first.\n1. Add Plot\n0. Back';
+      return 'END You have no plots. Please add a plot first. Dial again and select option 5 to add a plot.';
     }
 
-    if (inputArray.length === 2) {
+    if (inputArray.length === 1) {
       // Show plots
       let response = 'CON Select plot to insure:\n';
       plots.forEach((plot, index) => {
@@ -255,18 +255,18 @@ class UssdController {
       return response;
     }
 
-    const plotIndex = parseInt(inputArray[2]) - 1;
+    const plotIndex = parseInt(inputArray[1]) - 1;
     if (plotIndex < 0 || plotIndex >= plots.length) {
       return 'END Invalid plot selection.';
     }
 
     const selectedPlot = plots[plotIndex];
 
-    if (inputArray.length === 3) {
+    if (inputArray.length === 2) {
       return 'CON Select coverage type:\n1. Drought Only (KES 500/acre)\n2. Flood Only (KES 400/acre)\n3. Both (KES 800/acre)\n0. Back';
     }
 
-    const coverageType = inputArray[3];
+    const coverageType = inputArray[2];
     const coverageMap = { '1': 'DROUGHT', '2': 'FLOOD', '3': 'BOTH' };
     const premiumMap = { '1': 500, '2': 400, '3': 800 };
     
@@ -277,11 +277,11 @@ class UssdController {
     const premium = premiumMap[coverageType] * selectedPlot.acreage;
     const sumInsured = premium * 10; // 10x premium
 
-    if (inputArray.length === 4) {
+    if (inputArray.length === 3) {
       return `CON Insurance Quote:\nPlot: ${selectedPlot.name}\nCoverage: ${coverageMap[coverageType]}\nPremium: KES ${premium}\nSum Insured: KES ${sumInsured}\n\n1. Confirm & Pay\n0. Cancel`;
     }
 
-    if (inputArray[4] === '1') {
+    if (inputArray[3] === '1') {
       // Create policy and initiate payment
       const policyNumber = `POL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
@@ -409,25 +409,25 @@ class UssdController {
 
   async handleAddPlot(sessionData, farmer, input, inputArray) {
     // Simplified plot addition
-    if (inputArray.length === 2) {
+    if (inputArray.length === 1) {
       sessionData.plotData = {};
       return 'CON Enter plot name:';
     }
 
-    if (inputArray.length === 3) {
+    if (inputArray.length === 2) {
       sessionData.plotData.name = input;
       return 'CON Enter plot size (in acres):';
     }
 
-    if (inputArray.length === 4) {
+    if (inputArray.length === 3) {
       sessionData.plotData.acreage = parseFloat(input);
       return 'CON Select crop type:\n1. Maize\n2. Beans\n3. Potatoes\n4. Wheat\n5. Vegetables\n6. Other';
     }
 
-    if (inputArray.length === 5) {
+    if (inputArray.length === 4) {
       const cropTypes = ['MAIZE', 'BEANS', 'POTATOES', 'WHEAT', 'VEGETABLES', 'OTHER'];
       const cropIndex = parseInt(input) - 1;
-      
+
       if (cropIndex < 0 || cropIndex >= cropTypes.length) {
         return 'END Invalid crop type.';
       }
@@ -436,12 +436,12 @@ class UssdController {
       return 'CON Enter latitude (e.g. -1.2921):';
     }
 
-    if (inputArray.length === 6) {
+    if (inputArray.length === 5) {
       sessionData.plotData.latitude = parseFloat(input);
       return 'CON Enter longitude (e.g. 36.8219):';
     }
 
-    if (inputArray.length === 7) {
+    if (inputArray.length === 6) {
       sessionData.plotData.longitude = parseFloat(input);
       
       try {
