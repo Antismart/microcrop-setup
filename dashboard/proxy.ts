@@ -14,7 +14,7 @@ const SUBDOMAIN_ROLES = {
 // Protected routes that require authentication
 const PROTECTED_ROUTES = ['/dashboard']
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const hostname = request.headers.get('host') || ''
 
