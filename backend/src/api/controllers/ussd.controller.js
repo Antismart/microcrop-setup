@@ -408,6 +408,11 @@ class UssdController {
   }
 
   async handleAddPlot(sessionData, farmer, input, inputArray) {
+    // Initialize plotData if it doesn't exist
+    if (!sessionData.plotData) {
+      sessionData.plotData = {};
+    }
+
     // Simplified plot addition
     if (inputArray.length === 1) {
       sessionData.plotData = {};
