@@ -208,7 +208,7 @@ class UssdController {
 
   async handleMainMenu(sessionData, farmer, input, inputArray) {
     // Main menu for existing users
-    if (inputArray.length === 0 || inputArray.length === 1) {
+    if (inputArray.length === 0) {
       return `CON Welcome back, ${farmer.firstName}!\n1. Buy Insurance\n2. Check Policy\n3. Claim Status\n4. My Account\n5. Add Plot`;
     }
 
