@@ -785,6 +785,7 @@ const getPolicies = async (req, res) => {
     res.json({
       success: true,
       data: policies,
+      total: total,
       pagination: {
         page: parseInt(page),
         pageSize: parseInt(pageSize),
