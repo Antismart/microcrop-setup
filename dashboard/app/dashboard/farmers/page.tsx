@@ -47,7 +47,7 @@ export default function FarmersPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   // Fetch farmers with filters
-  const { data: farmersData, isLoading, error } = useFarmers({
+  const { data: farmersData, isLoading } = useFarmers({
     page,
     pageSize,
     search: searchQuery,
@@ -290,12 +290,6 @@ export default function FarmersPage() {
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-sm text-muted-foreground">Loading farmers...</div>
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-sm text-destructive">
-                Error loading farmers: {error?.message || "Unknown error"}
-              </div>
             </div>
           ) : farmersData?.data?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8">

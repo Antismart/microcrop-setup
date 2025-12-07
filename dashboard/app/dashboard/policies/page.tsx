@@ -43,7 +43,7 @@ export default function PoliciesPage() {
   const [page, setPage] = useState(1)
   const limit = 10
 
-  const { data, isLoading, error } = usePolicies({
+  const { data, isLoading } = usePolicies({
     page,
     pageSize: limit,
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -204,10 +204,6 @@ export default function PoliciesPage() {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Loading policies...</p>
               </div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-destructive">Error loading policies</p>
             </div>
           ) : policies.length === 0 ? (
             <div className="text-center py-12">
