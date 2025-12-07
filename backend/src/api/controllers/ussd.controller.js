@@ -255,36 +255,44 @@ class UssdController {
       return response;
     }
 
-    const plotIndex = parseInt(inputArray[1]) - 1;
-    if (plotIndex < 0 || plotIndex >= plots.length) {
-      return 'END Invalid plot selection.';
-    }
-
-    const selectedPlot = plots[plotIndex];
-
     if (inputArray.length === 2) {
+      const plotIndex = parseInt(inputArray[1]) - 1;
+      if (plotIndex < 0 || plotIndex >= plots.length) {
+        return 'END Invalid plot selection.';
+      }
       return 'CON Select coverage type:\n1. Drought Only (KES 500/acre)\n2. Flood Only (KES 400/acre)\n3. Both (KES 800/acre)\n0. Back';
     }
 
-    const coverageType = inputArray[2];
-    const coverageMap = { '1': 'DROUGHT', '2': 'FLOOD', '3': 'BOTH' };
-    const premiumMap = { '1': 500, '2': 400, '3': 800 };
-    
-    if (!coverageMap[coverageType]) {
-      return 'END Invalid coverage type.';
-    }
-
-    const premium = premiumMap[coverageType] * selectedPlot.acreage;
-    const sumInsured = premium * 10; // 10x premium
-
     if (inputArray.length === 3) {
+      const plotIndex = parseInt(inputArray[1]) - 1;
+      const selectedPlot = plots[plotIndex];
+      const coverageType = inputArray[2];
+      const coverageMap = { '1': 'DROUGHT', '2': 'FLOOD', '3': 'BOTH' };
+      const premiumMap = { '1': 500, '2': 400, '3': 800 };
+
+      if (!coverageMap[coverageType]) {
+        return 'END Invalid coverage type.';
+      }
+
+      const premium = premiumMap[coverageType] * selectedPlot.acreage;
+      const sumInsured = premium * 10; // 10x premium
+
       return `CON Insurance Quote:\nPlot: ${selectedPlot.name}\nCoverage: ${coverageMap[coverageType]}\nPremium: KES ${premium}\nSum Insured: KES ${sumInsured}\n\n1. Confirm & Pay\n0. Cancel`;
     }
 
-    if (inputArray[3] === '1') {
+    if (inputArray.length === 4 && inputArray[3] === '1') {
+      const plotIndex = parseInt(inputArray[1]) - 1;
+      const selectedPlot = plots[plotIndex];
+      const coverageType = inputArray[2];
+      const coverageMap = { '1': 'DROUGHT', '2': 'FLOOD', '3': 'BOTH' };
+      const premiumMap = { '1': 500, '2': 400, '3': 800 };
+
+      const premium = premiumMap[coverageType] * selectedPlot.acreage;
+      const sumInsured = premium * 10; // 10x premium
+
       // Create policy and initiate payment
-      const policyNumber = `POL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+      const policyNumber = `POL-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
       try {
         const policy = await prisma.policy.create({
           data: {
@@ -335,7 +343,7 @@ class UssdController {
           }
         } catch (paymentError) {
           logger.error('Payment service error:', paymentError);
-          
+
           // Update policy to cancelled on payment error
           await prisma.policy.update({
             where: { id: policy.id },
