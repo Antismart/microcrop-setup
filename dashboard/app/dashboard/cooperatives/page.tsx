@@ -242,10 +242,13 @@ export default function CooperativesPage() {
                       Loading cooperatives...
                     </TableCell>
                   </TableRow>
-                ) : cooperativesData?.data?.length === 0 ? (
+                ) : !cooperativesData?.data || cooperativesData?.data?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
-                      No cooperatives found.
+                      <div className="flex flex-col items-center gap-2">
+                        <Building2 className="h-8 w-8 text-muted-foreground" />
+                        <p className="text-muted-foreground">No cooperatives found</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (

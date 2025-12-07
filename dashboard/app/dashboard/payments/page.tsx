@@ -28,62 +28,10 @@ export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   
-  // Mock data for demonstration - replace with actual API call
-  const { data: payments, isLoading } = usePayments()
+  const { data: paymentsData, isLoading } = usePayments()
 
-  // Mock payment data
-  const mockPayments: any[] = [
-    {
-      id: "1",
-      reference: "PMT-2025-001",
-      farmerName: "John Kamau",
-      amount: 15000,
-      currency: "KES",
-      type: "PREMIUM",
-      status: "COMPLETED",
-      method: "MPESA",
-      date: new Date("2025-11-15"),
-      description: "Policy premium payment"
-    },
-    {
-      id: "2",
-      reference: "PMT-2025-002",
-      farmerName: "Mary Wanjiru",
-      amount: 50000,
-      currency: "KES",
-      type: "PAYOUT",
-      status: "PENDING",
-      method: "BANK_TRANSFER",
-      date: new Date("2025-11-16"),
-      description: "Claim payout"
-    },
-    {
-      id: "3",
-      reference: "PMT-2025-003",
-      farmerName: "Peter Ochieng",
-      amount: 12500,
-      currency: "KES",
-      type: "PREMIUM",
-      status: "COMPLETED",
-      method: "MPESA",
-      date: new Date("2025-11-17"),
-      description: "Policy renewal payment"
-    },
-    {
-      id: "4",
-      reference: "PMT-2025-004",
-      farmerName: "Sarah Akinyi",
-      amount: 75000,
-      currency: "KES",
-      type: "PAYOUT",
-      status: "PROCESSING",
-      method: "BANK_TRANSFER",
-      date: new Date("2025-11-17"),
-      description: "Drought claim payout"
-    },
-  ]
-
-  const displayPayments: any[] = Array.isArray(payments) ? payments : mockPayments
+  // Use API data if available, otherwise empty array
+  const displayPayments: any[] = paymentsData?.data || []
 
   // Filter payments
   const filteredPayments = displayPayments.filter((payment: any) => {

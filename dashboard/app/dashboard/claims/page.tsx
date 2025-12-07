@@ -44,7 +44,7 @@ export default function ClaimsPage() {
   const [page, setPage] = useState(1)
   const limit = 10
 
-  const { data, isLoading, error } = useClaims({
+  const { data, isLoading } = useClaims({
     page,
     pageSize: limit,
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -207,10 +207,6 @@ export default function ClaimsPage() {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Loading claims...</p>
               </div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-destructive">Error loading claims</p>
             </div>
           ) : claims.length === 0 ? (
             <div className="text-center py-12">
