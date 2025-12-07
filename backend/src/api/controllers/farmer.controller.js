@@ -509,7 +509,7 @@ const listFarmers = async (req, res) => {
 
     res.json({
       success: true,
-      farmers: farmers.map((farmer) => ({
+      data: farmers.map((farmer) => ({
         id: farmer.id,
         phoneNumber: farmer.phoneNumber,
         firstName: farmer.firstName,
@@ -521,6 +521,7 @@ const listFarmers = async (req, res) => {
         plotCount: farmer._count.plots,
         policyCount: farmer._count.policies,
       })),
+      total: total,
       pagination: {
         currentPage: parseInt(page),
         totalPages,
